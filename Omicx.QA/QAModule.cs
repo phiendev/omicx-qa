@@ -5,6 +5,7 @@ using Microsoft.OpenApi.Models;
 using Omicx.QA.Data;
 using Omicx.QA.Localization;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Omicx.QA.Elasticsearch;
 using OpenIddict.Validation.AspNetCore;
 using Volo.Abp;
 using Volo.Abp.Uow;
@@ -101,7 +102,10 @@ namespace Omicx.QA;
     typeof(AbpPermissionManagementMongoDbModule),
     typeof(AbpFeatureManagementMongoDbModule),
     typeof(AbpSettingManagementMongoDbModule),
-    typeof(BlobStoringDatabaseMongoDbModule)
+    typeof(BlobStoringDatabaseMongoDbModule),
+    
+    // Elasticsearch module
+    typeof(QAElasticsearchModule)
 )]
 public class QAModule : AbpModule
 {

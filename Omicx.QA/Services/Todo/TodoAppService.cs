@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Omicx.QA.Entities;
+using Omicx.QA.Entities.Todo;
 using Omicx.QA.Services.Todo.Dto;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
@@ -13,6 +13,12 @@ public class TodoAppService : ApplicationService, ITodoAppService
     public TodoAppService(IRepository<TodoItem, Guid> todoItemRepository)
     {
         _todoItemRepository = todoItemRepository;
+    }
+    
+    [HttpGet]
+    public async Task<string> HelloWorld()
+    {
+        return await Task.FromResult("Hello World");
     }
     
     [HttpGet]

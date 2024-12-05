@@ -1,6 +1,6 @@
 ﻿using Volo.Abp.Domain.Entities;
 
-namespace Omicx.QA.Entities;
+namespace Omicx.QA.Entities.Todo;
 
 public class TodoItem : BasicAggregateRoot<Guid>
 {
