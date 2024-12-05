@@ -1,0 +1,21 @@
+﻿{
+  "applications": {
+    "Omicx.QA.Angular": {
+      "type": "cli",
+      "workingDirectory": "../../angular",
+      "startCommand": "./start.ps1",
+      "launchUrl": "http://localhost:4200",
+      "execution": {
+        "order": 0
+      }
+    },
+    "Omicx.QA": {
+      "type": "dotnet-project",
+      "launchUrl": "https://localhost:44331",
+      "path": "../../Omicx.QA/Omicx.QA.csproj",
+      "execution": {
+        "order": 1
+      }
+    }
+  }
+}

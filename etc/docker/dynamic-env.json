@@ -1,0 +1,21 @@
+{
+  "production": true,
+  "application": {
+    "baseUrl":"http://localhost:4200",
+    "name": "QA",
+    "logoUrl": ""
+  },
+  "oAuthConfig": {
+    "issuer": "https://localhost:44331",
+    "redirectUri": "https://localhost:44331",
+    "clientId": "QA_App",
+    "responseType": "code",
+    "scope": "offline_access openid profile email phone QA"
+  },
+  "apis": {
+    "default": {
+      "url": "https://localhost:44331",
+      "rootNamespace": "QA"
+    }
+  }
+}

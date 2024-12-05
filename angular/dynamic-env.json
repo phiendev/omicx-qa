@@ -1,0 +1,21 @@
+{
+  "production": true,
+  "application": {
+    "baseUrl":"https://qa-web",
+    "name": "QA",
+    "logoUrl": ""
+  },
+  "oAuthConfig": {
+    "issuer": "https://qa-api/",
+    "redirectUri": "https://qa",
+    "clientId": "QA_App",
+    "responseType": "code",
+    "scope": "offline_access openid profile email phone"
+  },
+  "apis": {
+    "default": {
+      "url": "https://qa-api",
+      "rootNamespace": "QA"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "5fd1025d-9bc6-4e98-adfa-00aa6ab5aea6",
+  "template": "app-nolayers",
+  "versions": {
+    "AbpFramework": "9.0.0",
+    "AbpStudio": "0.9.14",
+    "TargetDotnetFramework": "net9.0"
+  },
+  "modules": {
+    "Omicx.QA": {
+      "path": "Omicx.QA.abpmdl"
+    }
+  },
+  "runProfiles": {
+    "Default": {
+      "path": "etc/run-profiles/Default.abprun.json"
+    }
+  },
+  "options": {
+    "httpRequests": {
+      "ignoredUrls": [
+        "^/metrics$"
+      ]
+    }
+  },
+  "creatingStudioConfiguration": {
+    "template": "app-nolayers",
+    "createdAbpStudioVersion": "0.9.14",
+    "multiTenancy": "true",
+    "uiFramework": "angular",
+    "databaseProvider": "mongodb",
+    "theme": "basic",
+    "themeStyle": "",
+    "progressiveWebApp": "",
+    "publicWebsite": "",
+    "socialLogin": ""
+  }
+}
