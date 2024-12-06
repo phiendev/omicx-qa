@@ -17,6 +17,7 @@
     <PackageReference Include="Volo.Abp.AspNetCore.Mvc" Version="9.0.0" />
     <PackageReference Include="Volo.Abp.Autofac" Version="9.0.0" />
     <PackageReference Include="Volo.Abp.AutoMapper" Version="9.0.0" />
+    <PackageReference Include="Volo.Abp.EntityFrameworkCore" Version="9.0.1" />
     <PackageReference Include="Volo.Abp.Swashbuckle" Version="9.0.0" />
     <PackageReference Include="Volo.Abp.AspNetCore.Serilog" Version="9.0.0" />
   </ItemGroup>
@@ -101,6 +102,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Omicx.QA.Elasticsearch\Omicx.QA.Elasticsearch.csproj" />
+    <ProjectReference Include="..\Omicx.QA.Engine\Omicx.QA.Engine.csproj" />
   </ItemGroup>
 
 </Project>

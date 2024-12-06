@@ -5,7 +5,10 @@ using Microsoft.OpenApi.Models;
 using Omicx.QA.Data;
 using Omicx.QA.Localization;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Nest;
 using Omicx.QA.Elasticsearch;
+using Omicx.QA.Elasticsearch.Configurations;
+using Omicx.QA.MultiTenancy.Customs;
 using OpenIddict.Validation.AspNetCore;
 using Volo.Abp;
 using Volo.Abp.Uow;
@@ -180,6 +183,8 @@ public class QAModule : AbpModule
         ConfigureDataProtection(context);
         ConfigureVirtualFiles(hostingEnvironment);
         ConfigureMongoDB(context);
+        ConfigureRegisterElasticsearchClient(context);
+        context.Services.AddScoped<ICurrentCustomTenant, CurrentCustomTenant>();
     }
     
     
@@ -397,5 +402,17 @@ public class QAModule : AbpModule
         app.UseAuditing();
         app.UseAbpSerilogEnrichers();
         app.UseConfiguredEndpoints();
+    }
+    
+    private void ConfigureRegisterElasticsearchClient(ServiceConfigurationContext context)
+    {
+        var configuration = context.Services.GetConfiguration();
+        var elasticsearchUri = configuration["Elasticsearch:ConnectionStrings"] ?? "http://localhost:9200";
+
+        var settings = new ConnectionSettings(new Uri(elasticsearchUri));
+
+        var elasticClient = new ElasticClient(settings);
+        
+        context.Services.AddSingleton<IElasticClient>(elasticClient);
     }
 }
