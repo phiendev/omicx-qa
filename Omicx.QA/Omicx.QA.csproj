@@ -105,4 +105,10 @@
     <ProjectReference Include="..\Omicx.QA.Elasticsearch\Omicx.QA.Elasticsearch.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="CrmCloud.Kafka">
+      <HintPath>..\packages\CrmCloud.Kafka.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

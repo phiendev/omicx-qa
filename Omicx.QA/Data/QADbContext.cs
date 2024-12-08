@@ -11,7 +11,7 @@ public class QADbContext : AbpMongoDbContext
     /* Add mongo collections here. Example:
      * public IMongoCollection<Question> Questions => Collection<Question>();
      */
-    public IMongoCollection<TodoItem> TestItems => Collection<TodoItem>();
+    public IMongoCollection<TodoItem> TodoItems => Collection<TodoItem>();
 
     protected override void CreateModel(IMongoModelBuilder modelBuilder)
     {
@@ -19,7 +19,7 @@ public class QADbContext : AbpMongoDbContext
         
         modelBuilder.Entity<TodoItem>(b =>
         {
-            b.CollectionName = "TodoItem";
+            b.CollectionName = "TodoItems";
         });
     }
 }

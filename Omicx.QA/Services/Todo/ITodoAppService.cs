@@ -11,5 +11,5 @@ public interface ITodoAppService : IApplicationService
     Task<List<TodoItemDto>> GetListAsync();
     Task<Elasticsearch.Responses.ISearchResponse<TodoItemDocument>> GetListDynamic(FilterTodoDynamicRequest input);
     Task<TodoItemDto> CreateAsync(TodoItemDto todo);
-    Task DeleteAsync(Guid id);
+    Task DeleteAsync(long id);
 }

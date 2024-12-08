@@ -449,6 +449,12 @@ public static class ElasticsearchExtensions
 
         return (propInfo.GetMethod?.ReturnType, propInfo.Name);
     }
+    
+    public static IndexName GetIndexName<TDoc>(int tenantId)
+    {
+        var esIndex = typeof(TDoc).GetCustomAttribute<ElasticsearchTypeAttribute>();
+        return Indices.Index($"{(tenantId != default ? $"{tenantId}_" : null)}{esIndex?.RelationName}");
+    }
 }
 
 // public static class ElasticsearchConfigurationExtensions

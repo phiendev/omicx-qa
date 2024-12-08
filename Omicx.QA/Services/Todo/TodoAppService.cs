@@ -8,9 +8,9 @@ using Omicx.QA.Entities.Todo;
 using Omicx.QA.MultiTenancy.Customs;
 using Omicx.QA.Services.Todo.Dto;
 using Omicx.QA.Services.Todo.Request;
+using Omicx.QA.Services.Todo.Service;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
-using Volo.Abp.MultiTenancy;
 
 namespace Omicx.QA.Services.Todo;
 
@@ -19,17 +19,19 @@ public class TodoAppService : ApplicationService, ITodoAppService
 {
     private readonly ICurrentCustomTenant _currentCustomTenant;
     private readonly IElasticClient _elasticClient;
-    private readonly IRepository<TodoItem, Guid> _todoItemRepository;
+    private readonly IRepository<TodoItem, long> _todoItemRepository;
+    private readonly Task<int?> _customTenantId;
     
     public TodoAppService(
         ICurrentCustomTenant currentCustomTenant,
         IElasticClient elasticClient,
-        IRepository<TodoItem, Guid> todoItemRepository
+        IRepository<TodoItem, long> todoItemRepository
         )
     {
         _currentCustomTenant = currentCustomTenant;
         _elasticClient = elasticClient;
         _todoItemRepository = todoItemRepository;
+        _customTenantId = _currentCustomTenant.GetCustomTenantIdAsync();
     }
     
     [HttpGet("hello-world")]
@@ -41,45 +43,90 @@ public class TodoAppService : ApplicationService, ITodoAppService
     [HttpGet("get-list")]
     public async Task<List<TodoItemDto>> GetListAsync()
     {
-        var items = await _todoItemRepository.GetListAsync();
-        return ObjectMapper.Map<List<TodoItem>, List<TodoItemDto>>(items);
+        try
+        {
+            var items = await _todoItemRepository.GetListAsync();
+            return ObjectMapper.Map<List<TodoItem>, List<TodoItemDto>>(items);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to get list");
+            throw new Exception("Failed to get list");
+        }
     }
     
     [HttpPost("get-list-dynamic")]
     public async Task<Elasticsearch.Responses.ISearchResponse<TodoItemDocument>> GetListDynamic(FilterTodoDynamicRequest input)
     {
-        var fil = FilterFactory.Filter(input.Payload);
-        
-        if (fil == null)
-            return await Task.FromResult(new Elasticsearch.Responses.SearchResponse<TodoItemDocument>());
-        
-        int? customTenantId = await _currentCustomTenant.GetCustomTenantIdAsync();
-        
-        var req = PageRequest<TodoItemDocument>
-            .Where(fil)
-            .ForTenant(customTenantId)
-            .Paging(input.CurrentPage, input.PageSize);
-        
-        var todoItemDocument = await _elasticClient.QueryAsync<TodoItemDocument>(req);
-        
-        return todoItemDocument;
+        try
+        {
+            var fil = FilterFactory.Filter(input.Payload);
+
+            if (fil is null)
+                return await Task.FromResult(new Elasticsearch.Responses.SearchResponse<TodoItemDocument>());
+
+            int? customTenantId = await _currentCustomTenant.GetCustomTenantIdAsync();
+
+            var req = PageRequest<TodoItemDocument>
+                .Where(fil)
+                .ForTenant(customTenantId)
+                .Paging(input.CurrentPage, input.PageSize);
+
+            var todoItemDocument = await _elasticClient.QueryAsync<TodoItemDocument>(req);
+
+            return todoItemDocument;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to get list dynamic");
+            throw new Exception("Failed to get list");
+        }
     }
     
     [HttpPost("create-todo")]
     public async Task<TodoItemDto> CreateAsync(TodoItemDto todo)
     {
-        var add = ObjectMapper.Map<TodoItemDto, TodoItem>(todo);
-        
-        var result = await _todoItemRepository.InsertAsync(add);
+        try
+        {
+            var add = ObjectMapper.Map<TodoItemDto, TodoItem>(todo);
+            
+            if (_customTenantId is not null)
+            {
+                add.CustomTenantId =  await _customTenantId;
+            }
+            
+            var result = await _todoItemRepository.InsertAsync(add, autoSave: true);
 
-        if (result == null) throw new Exception("Thêm không thành công");
+            if (result is null) throw new Exception("Failed to create todo");
 
-        return ObjectMapper.Map<TodoItem, TodoItemDto>(result);
+            // var item = ObjectMapper.Map<TodoItem, TodoItemDocument>(result);
+            //
+            // await TodoElasticService.UpsertTodoItem(_elasticClient, item);
+            
+            return ObjectMapper.Map<TodoItem, TodoItemDto>(result);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to create todo");
+            throw new Exception("Failed to create todo");
+        }
     }
     
     [HttpDelete("delete-todo")]
-    public async Task DeleteAsync(Guid id)
+    public async Task DeleteAsync(long id)
     {
-        await _todoItemRepository.DeleteAsync(id);
+        try
+        {
+            await _todoItemRepository.DeleteAsync(id, autoSave: true);
+
+            // int? customTenantId = await _customTenantId;
+            //
+            // await TodoElasticService.DeleteTodoItem(_elasticClient, customTenantId, id);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to delete todo");
+            throw new Exception("Failed to delete todo");
+        }
     }
 }
