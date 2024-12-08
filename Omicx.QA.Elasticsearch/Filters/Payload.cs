@@ -13,9 +13,9 @@ public class Payload : IPayload
     public FilterType Type { get; set; }
 
     [JsonProperty("payload")] //
-    #pragma warning disable
+#pragma warning disable
     private object _payload;
-    #pragma warning restore
+#pragma warning restore
 
     public IPayload GetPayloadData() => GetPayload(_payload, Type);
 

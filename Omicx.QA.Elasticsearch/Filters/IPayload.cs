@@ -1,4 +1,6 @@
-﻿namespace Omicx.QA.Elasticsearch.Filters;
+﻿using Omicx.QA.Elasticsearch.Enums;
+
+namespace Omicx.QA.Elasticsearch.Filters;
 
 public interface IPayload
 {

@@ -6,11 +6,10 @@ public class OrExpression : Expression
 {
     public OrExpression(params IExpression[] expressions) : base(expressions)
     {
-        
     }
-    
-    public override QueryContainer GetQuery(string prefix = null)
+
+    public override QueryContainer GetQuery(string prefix = null) => new BoolQuery
     {
-        throw new NotImplementedException();
-    }
+        Should = Expressions.Select(e => e.GetQuery(prefix))
+    };
 }

@@ -93,7 +93,7 @@ public class ElasticsearchManager : IElasticsearchManager
             return new SingleNodeConnectionPool(nodes.First());
         }
 
-        return (nodes.Count > 1 ? new SniffingConnectionPool(nodes) : null)!;
+        return nodes.Count > 1 ? new SniffingConnectionPool(nodes) : null;
     }
 
 

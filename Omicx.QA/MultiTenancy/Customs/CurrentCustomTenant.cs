@@ -1,34 +1,43 @@
 ﻿using MongoDB.Driver;
-using Omicx.QA.Engine;
 using Omicx.QA.Entities.Customs;
-using Volo.Abp.Domain.Repositories;
+using Volo.Abp.DependencyInjection;
 using Volo.Abp.MultiTenancy;
+using Omicx.QA.Mongo;
 
 namespace Omicx.QA.MultiTenancy.Customs;
 
-public class CurrentCustomTenant : ICurrentCustomTenant
+public class CurrentCustomTenant : ITransientDependency, ICurrentCustomTenant
 {
     private readonly ICurrentTenant _currentTenant;
-    private readonly MongoDbContext _context;
+    private readonly IMongoDatabaseProvider _mongoDatabaseProvider;
+    private const string CollectionName = "AbpTenants";
 
     public CurrentCustomTenant(
         ICurrentTenant currentTenant,
-        MongoDbContext context
+        IMongoDatabaseProvider mongoDatabaseProvider
         )
     {
         _currentTenant = currentTenant;
-        _context = context;
+        _mongoDatabaseProvider = mongoDatabaseProvider;
     }
     
+    public Guid? Id => _currentTenant.Id;
+    public string? Name => _currentTenant.Name;
+    public bool IsAvailable => _currentTenant.IsAvailable;
+    public IDisposable Change(Guid? id, string? name = null)
+    {
+        return _currentTenant.Change(id, name);
+    }
     public async Task<int?> GetCustomTenantIdAsync()
     {
         if (_currentTenant.Id.HasValue)
         {
-            var collection = _context.SharedData.Get<IMongoDatabase>("Database").GetCollection<CustomTenant>("AbpTenants");
-            var currentCustomTenant = await collection.Find(x => x.Id == _currentTenant.Id).FirstOrDefaultAsync();
-            return currentCustomTenant?.CustomTenantId;
+            var database = await _mongoDatabaseProvider.GetDatabaseAsync();
+            var collection = database.GetCollection<CustomTenant>(CollectionName);
+            var filter = Builders<CustomTenant>.Filter.Eq(t => t.Id, _currentTenant.Id);
+            var tenant = await collection.Find(filter).FirstOrDefaultAsync();
+            if(tenant is not null) return tenant.CustomTenantId;
         }
-
         return null;
     }
 }

@@ -13,16 +13,25 @@ public class PageRequest<TDoc, T>
     : SearchRequest<T>, IPageRequest where T : PageRequest<TDoc, T> where TDoc : IElasticNestedEntity
 {
     private int PageSize { get; set; } = 10;
+
     private int CurrentPage { get; set; } = 1;
+
     public int Skip => (CurrentPage - 1) * PageSize;
     public int Take => PageSize;
     private int? SearchAfterSize { get; set; }
     public int? Size => SearchAfterSize;
+
+
     public ICollection<string> OrderBy => _asc;
+
     public ICollection<string> OrderByDesc => _desc;
     public string ScrollTime { get; private set; }
+
     public IList<string> ListSearchAfter => _search_after;
+
+
     private readonly IList<string> _asc = new List<string>();
+
     private readonly IList<string> _desc = new List<string>();
     private readonly IList<string> _search_after = new List<string>();
 

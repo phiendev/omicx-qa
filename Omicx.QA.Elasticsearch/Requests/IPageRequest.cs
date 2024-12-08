@@ -2,7 +2,7 @@ using Nest;
 
 namespace Omicx.QA.Elasticsearch.Requests;
 
-public interface IPageRequest: ISearchRequest<IPageRequest>
+public interface IPageRequest : ISearchRequest<IPageRequest>
 {
     int Skip { get; }
 

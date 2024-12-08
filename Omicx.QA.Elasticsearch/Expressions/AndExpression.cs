@@ -6,11 +6,10 @@ public class AndExpression : Expression
 {
     public AndExpression(params IExpression[] expressions) : base(expressions)
     {
-        
     }
-    
-    public override QueryContainer GetQuery(string prefix = null)
+
+    public override QueryContainer GetQuery(string prefix = null) => new BoolQuery
     {
-        throw new NotImplementedException();
-    }
+        Must = Expressions.Select(e => e.GetQuery(prefix))
+    };
 }

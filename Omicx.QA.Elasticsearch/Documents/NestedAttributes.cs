@@ -8,17 +8,17 @@ public abstract class NestedAttributes : IReadOnlyDictionary<string, object>
 {
     private readonly IDictionary<string, object> _pairs;
 
-    protected NestedAttributes()
+    public NestedAttributes()
     {
         _pairs = new Dictionary<string, object>();
     }
 
-    protected NestedAttributes(IDictionary<string, object> pairs) : this()
+    public NestedAttributes(IDictionary<string, object> pairs) : this()
     {
         _pairs = pairs;
     }
 
-    public void Copy(IReadOnlyDictionary<string, object>? input)
+    public void Copy(IReadOnlyDictionary<string, object> input)
     {
         if (input == null) return;
 

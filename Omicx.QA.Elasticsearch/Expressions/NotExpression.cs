@@ -6,11 +6,10 @@ public class NotExpression : Expression
 {
     public NotExpression(params IExpression[] expressions) : base(expressions)
     {
-        
     }
-    
-    public override QueryContainer GetQuery(string prefix = null)
+
+    public override QueryContainer GetQuery(string prefix = null) => new BoolQuery
     {
-        throw new NotImplementedException();
-    }
+        MustNot = Expressions.Select(e => e.GetQuery(prefix))
+    };
 }

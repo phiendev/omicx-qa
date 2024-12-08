@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Nest;
 using Omicx.QA.Elasticsearch;
 using Omicx.QA.Elasticsearch.Configurations;
+using Omicx.QA.Mongo;
 using Omicx.QA.MultiTenancy.Customs;
 using OpenIddict.Validation.AspNetCore;
 using Volo.Abp;
@@ -112,9 +113,6 @@ namespace Omicx.QA;
 )]
 public class QAModule : AbpModule
 {
-    /* Single point to enable/disable multi-tenancy */
-    private const bool IsMultiTenant = true;
-
     public override void PreConfigureServices(ServiceConfigurationContext context)
     {
         var hostingEnvironment = context.Services.GetHostingEnvironment();
@@ -173,7 +171,7 @@ public class QAModule : AbpModule
 
         ConfigureAuthentication(context);
         ConfigureBundles();
-        ConfigureMultiTenancy();
+        ConfigureMultiTenancy(context);
         ConfigureUrls(configuration);
         ConfigureAutoMapper(context);
         ConfigureSwagger(context.Services, configuration);
@@ -184,7 +182,7 @@ public class QAModule : AbpModule
         ConfigureVirtualFiles(hostingEnvironment);
         ConfigureMongoDB(context);
         ConfigureRegisterElasticsearchClient(context);
-        context.Services.AddScoped<ICurrentCustomTenant, CurrentCustomTenant>();
+        ConfigureRegisterAddScopeds(context);
     }
     
     
@@ -208,11 +206,13 @@ public class QAModule : AbpModule
         });
     }
 
-    private void ConfigureMultiTenancy()
+    private void ConfigureMultiTenancy(ServiceConfigurationContext context)
     {
+        var configuration = context.Services.GetConfiguration();
+        
         Configure<AbpMultiTenancyOptions>(options =>
         {
-            options.IsEnabled = IsMultiTenant;
+            options.IsEnabled = bool.Parse(configuration["App:Multitenancy"] ?? "true");
         });
     }
 
@@ -361,6 +361,7 @@ public class QAModule : AbpModule
     {
         var app = context.GetApplicationBuilder();
         var env = context.GetEnvironment();
+        var configuration = context.GetConfiguration();
 
         if (env.IsDevelopment())
         {
@@ -383,7 +384,7 @@ public class QAModule : AbpModule
         app.UseAuthentication();
         app.UseAbpOpenIddictValidation();
 
-        if (IsMultiTenant)
+        if (bool.Parse(configuration["App:Multitenancy"] ?? "true"))
         {
             app.UseMultiTenancy();
         }
@@ -414,5 +415,11 @@ public class QAModule : AbpModule
         var elasticClient = new ElasticClient(settings);
         
         context.Services.AddSingleton<IElasticClient>(elasticClient);
+    }
+
+    private void ConfigureRegisterAddScopeds(ServiceConfigurationContext context)
+    {
+        context.Services.AddScoped<IMongoDatabaseProvider, MongoDatabaseProvider>();
+        context.Services.AddScoped<ICurrentCustomTenant, CurrentCustomTenant>();
     }
 }

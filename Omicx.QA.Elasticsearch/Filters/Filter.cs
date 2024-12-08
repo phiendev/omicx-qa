@@ -23,7 +23,6 @@ public abstract class Filter<TVal> : Expression, IFilter
 
     protected Filter(string field, TVal value) : this(field, value == null ? Array.Empty<TVal>() : new[] {value})
     {
-            
     }
 
     public abstract override QueryContainer GetQuery(string prefix = null);

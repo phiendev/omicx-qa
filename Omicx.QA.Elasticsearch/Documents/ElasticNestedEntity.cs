@@ -23,7 +23,7 @@ public abstract class ElasticNestedEntity : NestedAttributes, IElasticNestedEnti
     {
         if (string.IsNullOrEmpty(propName)) throw new ArgumentNullException(nameof(propName));
 
-        if (_declaredAttributes.TryGetValue(propName, out var attribute)) return attribute.GetValue(this);
+        if (_declaredAttributes.ContainsKey(propName)) return _declaredAttributes[propName].GetValue(this);
 
         if (ContainsKey(propName) && TryGetValue(propName, out var value)) return value;
 
@@ -51,6 +51,8 @@ public abstract class ElasticNestedEntity : NestedAttributes, IElasticNestedEnti
 
     private static object GetSafeValue(object value, Type type)
     {
+        if (value == null) return null;
+
         if (type.IsArray || type.IsGenericType)
         {
             if (value is JArray array) return array.ToObject(type);
@@ -59,12 +61,12 @@ public abstract class ElasticNestedEntity : NestedAttributes, IElasticNestedEnti
 
         if (type != typeof(DateTimeOffset)) return Convert.ChangeType(value, type);
 
-        return (value switch
+        return value switch
         {
             DateTime dateTime when dateTime == default => null,
             DateTime dateTime => new DateTimeOffset(dateTime),
             DateTimeOffset dateTimeOffset when dateTimeOffset == default => null,
             _ => Convert.ChangeType(value, type)
-        });
+        };
     }
 }

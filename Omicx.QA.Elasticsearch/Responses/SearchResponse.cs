@@ -32,7 +32,7 @@ public class SearchResponse<TDoc, TOut> : ISearchResponse<TDoc>
 
     protected SearchResponse(ICollection<TDoc> documents, long total = 0)
     {
-        if (documents.Any()) _documents.AddRange(documents);
+        if (documents != null && documents.Any()) _documents.AddRange(documents);
 
         Total = total;
     }
@@ -40,7 +40,7 @@ public class SearchResponse<TDoc, TOut> : ISearchResponse<TDoc>
     public static TOut Of(ICollection<TDoc> documents)
     {
         var response = Create();
-        if (documents.Any()) response.Instance._documents.AddRange(documents);
+        if (documents != null && documents.Any()) response.Instance._documents.AddRange(documents);
 
         return response;
     }
@@ -77,7 +77,7 @@ public class SearchResponse<TDoc, TOut> : ISearchResponse<TDoc>
 
     public TOut Add(TDoc doc)
     {
-        Instance._documents.Add(doc);
+        if (doc != null) Instance._documents.Add(doc);
 
         return Instance;
     }

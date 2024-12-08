@@ -26,6 +26,8 @@ public static class ElasticsearchExtensions
     public static async Task<bool> CreateIndexAsync<TDoc>(
         this IElasticClient client, CancellationToken token = default) where TDoc : class
     {
+        if (client == null) return false;
+
         var esIndex = typeof(TDoc).GetCustomAttribute<ElasticsearchTypeAttribute>();
         if (esIndex == null
             || string.IsNullOrEmpty(esIndex.RelationName)
@@ -83,7 +85,7 @@ public static class ElasticsearchExtensions
         return createRes.IsValid;
     }
 
-    public static async Task<Responses.ISearchResponse<TDoc>> QueryAsync<TDoc>(
+    public static async Task<Responses.SearchResponse<TDoc>> QueryAsync<TDoc>(
         this IElasticClient client,
         IElasticRequest request,
         CancellationToken token = default) where TDoc : class, IElasticNestedEntity
@@ -95,8 +97,7 @@ public static class ElasticsearchExtensions
             throw new ElasticsearchClientException(searchResponse.DebugInformation);
 
         var totalCount = await CountAsync<TDoc>(client, request, token);
-        var docResponse = Responses.SearchResponse<TDoc>.Of(totalCount)
-            .Scroll(searchResponse.ScrollId);
+        var docResponse = Responses.SearchResponse<TDoc>.Of(totalCount).Scroll(searchResponse.ScrollId);
         foreach (var doc in searchResponse.Documents)
         {
             var instance = Activator.CreateInstance<TDoc>();
@@ -136,13 +137,13 @@ public static class ElasticsearchExtensions
     {
         if (client == null) throw new ArgumentNullException(nameof(client));
 
-        CountResponse? countRes = null;
+        CountResponse countRes = null;
         if (request is Requests.ISearchRequest search)
         {
             var esIndex = typeof(TDoc).GetCustomAttribute<ElasticsearchTypeAttribute>();
 
             var index = Indices.Index(
-                $"{(request.TenantId != default ? $"{request.TenantId}_" : null)}{esIndex?.RelationName}");
+                $"{(request.CustomTenantId != default ? $"{request.CustomTenantId}_" : null)}{esIndex?.RelationName}");
             countRes = await client.CountAsync<TDoc>(cd =>
                     cd.Query(qcd =>
                     {
@@ -167,7 +168,7 @@ public static class ElasticsearchExtensions
         const string termAggregationName = "group_by_field";
 
         var esIndex = typeof(TDoc).GetCustomAttribute<ElasticsearchTypeAttribute>();
-        var indexName = $"{(request.TenantId != default ? $"{request.TenantId}_" : null)}{esIndex?.RelationName}";
+        var indexName = $"{(request.CustomTenantId != default ? $"{request.CustomTenantId}_" : null)}{esIndex?.RelationName}";
 
         var (returnType, name) = GetFieldName(groupByField);
         var fieldName = client.ConnectionSettings?.DefaultFieldNameInferrer?
@@ -199,7 +200,7 @@ public static class ElasticsearchExtensions
         return result;
     }
 
-    public static async Task<Responses.ISearchResponse<TDoc>> ScrollDocumentAsync<TDoc>(
+    public static async Task<Responses.SearchResponse<TDoc>> ScrollDocumentAsync<TDoc>(
         this IElasticClient client,
         string scroll,
         string scrollId,
@@ -237,7 +238,7 @@ public static class ElasticsearchExtensions
         if (request == null)
             throw new ArgumentNullException(nameof(request));
 
-        var index = GetIndexName<TDoc>(request.TenantId);
+        var index = GetIndexName<TDoc>(request.CustomTenantId);
 
         var searchDescriptor = new SearchDescriptor<IDictionary<string, object>>().Index(index);
 
@@ -252,12 +253,11 @@ public static class ElasticsearchExtensions
 
         if (!(request is IPageRequest page)) return searchDescriptor;
 
-        searchDescriptor.Scroll(page.ScrollTime);
+        if (page.ScrollTime != null) searchDescriptor.Scroll(page.ScrollTime);
 
         if (page.Size == null) searchDescriptor.Skip(page.Skip).Take(page.Take);
 
         if (!page.HasSort) return searchDescriptor;
-
 
         var sortDescriptor = new SortDescriptor<IDictionary<string, object>>();
         foreach (var asc in page.OrderBy) sortDescriptor.Ascending(FieldName(client, asc));
@@ -276,7 +276,7 @@ public static class ElasticsearchExtensions
             searchDescriptor.Size(page.Size);
         }
 
-        if (page.ListSearchAfter.Any())
+        if (page.ListSearchAfter != null && page.ListSearchAfter.Any())
         {
             searchDescriptor.SearchAfter(page.ListSearchAfter);
         }
@@ -286,7 +286,7 @@ public static class ElasticsearchExtensions
 
     public static string FieldName(this IElasticClient client, string fieldName)
     {
-        if (string.IsNullOrEmpty(fieldName)) return "";
+        if (client == null || string.IsNullOrEmpty(fieldName)) return null;
 
         return client.ConnectionSettings?.DefaultFieldNameInferrer?.Invoke(fieldName) ?? fieldName;
     }
@@ -323,9 +323,9 @@ public static class ElasticsearchExtensions
     };
 
 
-    public static IMappingExpression<TSrc, TDes>? DynamicAttributes<TSrc, TDes, TProp>(
-        this IMappingExpression<TSrc, TDes>? mapping,
-        Expression<Func<TSrc, ICollection<TProp>>>? attributesExp)
+    public static IMappingExpression<TSrc, TDes> DynamicAttributes<TSrc, TDes, TProp>(
+        this IMappingExpression<TSrc, TDes> mapping,
+        Expression<Func<TSrc, ICollection<TProp>>> attributesExp)
         where TDes : ElasticNestedEntity
         where TProp : IDynamicAttribute
     {
@@ -334,10 +334,13 @@ public static class ElasticsearchExtensions
         {
             var getter = attributesExp.Compile();
             var attributes = getter(src);
-            foreach (var attribute in attributes)
+            if (attributes != null)
             {
-                var (key, val) = attribute.GetProperty();
-                des.Add(key, val);
+                foreach (var attribute in attributes)
+                {
+                    var (key, val) = attribute.GetProperty();
+                    des.Add(key, val);
+                }
             }
 
             des.AfterPropertiesSet();
@@ -361,7 +364,7 @@ public static class ElasticsearchExtensions
         if (type.IsArray)
         {
             var elementType = type.GetElementType();
-            var dt = elementType?.ConvertToDataType();
+            var dt = elementType.ConvertToDataType();
 
             return DataType.Object.Equals(dt) ? DataType.Nested : DataType.Select;
         }
@@ -407,6 +410,8 @@ public static class ElasticsearchExtensions
 
     private static string GetDataType(Type type)
     {
+        if (type == null) return "text";
+
         if (type == typeof(long)) return "long";
 
         if (type == typeof(int)) return "integer";
@@ -424,7 +429,7 @@ public static class ElasticsearchExtensions
             $"{(tenantId != default ? $"{tenantId}_" : null)}{esIndex?.RelationName}");
     }
 
-    public static (Type?, string?) GetFieldName<TDoc>(Expression<Func<TDoc, object>> exp)
+    public static (Type, string) GetFieldName<TDoc>(Expression<Func<TDoc, object>> exp)
     {
         if (exp.Body is MethodCallExpression mcExp)
         {
@@ -433,7 +438,7 @@ public static class ElasticsearchExtensions
 
             var constantExp = (ConstantExpression)lastArg;
 
-            return (constantExp.Type, (string?)constantExp.Value);
+            return (constantExp.Type, (string)constantExp.Value);
         }
 
         var memberExpression = exp.Body is UnaryExpression unaryExp

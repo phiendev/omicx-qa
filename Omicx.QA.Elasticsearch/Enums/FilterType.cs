@@ -1,4 +1,4 @@
-﻿namespace Omicx.QA.Elasticsearch.Filters;
+﻿namespace Omicx.QA.Elasticsearch.Enums;
 
 public enum FilterType
 {

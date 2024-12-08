@@ -8,7 +8,7 @@ public class SearchRequest : SearchRequest<SearchRequest>
 
 public class SearchRequest<T> : ISearchRequest<T> where T : SearchRequest<T>
 {
-    public int? TenantId { get; set; }
+    public int? CustomTenantId { get; set; }
     public IExpression Expression { get; private set; }
 
     protected T Instance;
@@ -19,7 +19,7 @@ public class SearchRequest<T> : ISearchRequest<T> where T : SearchRequest<T>
 
     public T ForTenant(int? tenantId)
     {
-        TenantId = tenantId;
+        CustomTenantId = tenantId;
 
         return Instance;
     }

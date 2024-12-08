@@ -48,6 +48,9 @@ public class Program
                 builder.Services.AddDataMigrationEnvironment();
             }
             await builder.AddApplicationAsync<QAModule>();
+            
+            builder.Services.AddControllers().AddNewtonsoftJson();
+            
             var app = builder.Build();
             await app.InitializeApplicationAsync();
 

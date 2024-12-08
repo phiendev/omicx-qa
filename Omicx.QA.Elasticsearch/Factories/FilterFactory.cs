@@ -39,7 +39,7 @@ public static class FilterFactory
         throw new NotSupportedException($"{@operator} has not supported yet");
     }
 
-    public static IExpression? Filter(IPayload payload)
+    public static IExpression Filter(IPayload payload)
     {
         if (payload is SinglePayload sp)
             return GetFactory(sp.Operator).GetFilter(sp.Field, sp.Value, sp.DataType);

@@ -1,6 +1,8 @@
-﻿namespace Omicx.QA.MultiTenancy.Customs;
+﻿using Volo.Abp.MultiTenancy;
 
-public interface ICurrentCustomTenant
+namespace Omicx.QA.MultiTenancy.Customs;
+
+public interface ICurrentCustomTenant : ICurrentTenant
 {
     Task<int?> GetCustomTenantIdAsync();
 }
