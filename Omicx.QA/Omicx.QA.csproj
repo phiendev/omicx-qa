@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Confluent.Kafka" Version="2.6.1" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.0" />
     <PackageReference Include="Serilog.AspNetCore" Version="8.0.2" />
     <PackageReference Include="Serilog.Sinks.Async" Version="2.0.0" />
@@ -108,6 +109,9 @@
   <ItemGroup>
     <Reference Include="CrmCloud.Kafka">
       <HintPath>..\packages\CrmCloud.Kafka.dll</HintPath>
+    </Reference>
+    <Reference Include="CrmCloud.Kafka.Abp">
+      <HintPath>..\packages\CrmCloud.Kafka.Abp.dll</HintPath>
     </Reference>
   </ItemGroup>
 

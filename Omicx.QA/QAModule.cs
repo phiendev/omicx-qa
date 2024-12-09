@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Cors;
+﻿using CrmCloud.Kafka;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
@@ -107,7 +108,7 @@ namespace Omicx.QA;
     typeof(AbpFeatureManagementMongoDbModule),
     typeof(AbpSettingManagementMongoDbModule),
     typeof(BlobStoringDatabaseMongoDbModule),
-    
+
     // Elasticsearch module
     typeof(QAElasticsearchModule)
 )]
@@ -144,7 +145,8 @@ public class QAModule : AbpModule
 
             PreConfigure<OpenIddictServerBuilder>(serverBuilder =>
             {
-                serverBuilder.AddProductionEncryptionAndSigningCertificate("openiddict.pfx", configuration["AuthServer:CertificatePassPhrase"]!);
+                serverBuilder.AddProductionEncryptionAndSigningCertificate("openiddict.pfx",
+                    configuration["AuthServer:CertificatePassPhrase"]!);
             });
         }
 
@@ -181,14 +183,16 @@ public class QAModule : AbpModule
         ConfigureDataProtection(context);
         ConfigureVirtualFiles(hostingEnvironment);
         ConfigureMongoDB(context);
+        ConfigureRegisterKafka(context);
         ConfigureRegisterElasticsearchClient(context);
         ConfigureRegisterAddScopeds(context);
     }
-    
-    
+
+
     private void ConfigureAuthentication(ServiceConfigurationContext context)
     {
-        context.Services.ForwardIdentityAuthenticationForBearer(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
+        context.Services.ForwardIdentityAuthenticationForBearer(OpenIddictValidationAspNetCoreDefaults
+            .AuthenticationScheme);
         context.Services.Configure<AbpClaimsPrincipalFactoryOptions>(options =>
         {
             options.IsDynamicClaimsEnabled = true;
@@ -209,7 +213,7 @@ public class QAModule : AbpModule
     private void ConfigureMultiTenancy(ServiceConfigurationContext context)
     {
         var configuration = context.Services.GetConfiguration();
-        
+
         Configure<AbpMultiTenancyOptions>(options =>
         {
             options.IsEnabled = bool.Parse(configuration["App:Multitenancy"] ?? "true");
@@ -221,7 +225,8 @@ public class QAModule : AbpModule
         Configure<AppUrlOptions>(options =>
         {
             options.Applications["MVC"].RootUrl = configuration["App:SelfUrl"];
-            options.RedirectAllowedUrls.AddRange(configuration["App:RedirectAllowedUrls"]?.Split(',') ?? Array.Empty<string>());
+            options.RedirectAllowedUrls.AddRange(configuration["App:RedirectAllowedUrls"]?.Split(',') ??
+                                                 Array.Empty<string>());
 
             options.Applications["Angular"].RootUrl = configuration["App:ClientUrl"];
             options.Applications["Angular"].Urls[AccountUrlNames.PasswordReset] = "account/reset-password";
@@ -260,10 +265,7 @@ public class QAModule : AbpModule
             options.Languages.Add(new LanguageInfo("es", "es", "Español"));
         });
 
-        Configure<AbpExceptionLocalizationOptions>(options =>
-        {
-            options.MapCodeNamespace("QA", typeof(QAResource));
-        });
+        Configure<AbpExceptionLocalizationOptions>(options => { options.MapCodeNamespace("QA", typeof(QAResource)); });
     }
 
     private void ConfigureAutoApiControllers()
@@ -280,7 +282,7 @@ public class QAModule : AbpModule
             configuration["AuthServer:Authority"]!,
             new Dictionary<string, string>
             {
-                {"QA", "QA API"}
+                { "QA", "QA API" }
             },
             options =>
             {
@@ -299,7 +301,7 @@ public class QAModule : AbpModule
              * See AutoMapper's documentation to learn what it is:
              * https://docs.automapper.org/en/stable/Configuration-validation.html
              */
-            options.AddMaps<QAModule>(/* validate: true */);
+            options.AddMaps<QAModule>( /* validate: true */);
         });
     }
 
@@ -345,10 +347,7 @@ public class QAModule : AbpModule
 
     private void ConfigureMongoDB(ServiceConfigurationContext context)
     {
-        context.Services.AddMongoDbContext<QADbContext>(options =>
-        {
-            options.AddDefaultRepositories();
-        });
+        context.Services.AddMongoDbContext<QADbContext>(options => { options.AddDefaultRepositories(); });
 
         context.Services.AddAlwaysDisableUnitOfWorkTransaction();
         Configure<AbpUnitOfWorkDefaultOptions>(options =>
@@ -404,7 +403,15 @@ public class QAModule : AbpModule
         app.UseAbpSerilogEnrichers();
         app.UseConfiguredEndpoints();
     }
-    
+
+    private void ConfigureRegisterKafka(ServiceConfigurationContext context)
+    {
+        // context.Services.UseKafkaPubSub(
+        //     new[] { GetType().Assembly },
+        //     installer => installer.UseConfigDiscovery(_ => new FileBasedConfigDiscoveryStrategy())
+        // );
+    }
+
     private void ConfigureRegisterElasticsearchClient(ServiceConfigurationContext context)
     {
         var configuration = context.Services.GetConfiguration();
@@ -413,7 +420,7 @@ public class QAModule : AbpModule
         var settings = new ConnectionSettings(new Uri(elasticsearchUri));
 
         var elasticClient = new ElasticClient(settings);
-        
+
         context.Services.AddSingleton<IElasticClient>(elasticClient);
     }
 

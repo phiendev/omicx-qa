@@ -11,14 +11,28 @@ public static class TodoElasticService
     {
         if (item.CustomTenantId is null) return;
         var index = ElasticsearchExtensions.GetIndexName<TodoItemDocument>(item.CustomTenantId);
-        var bulkResponse = await elasticClient.BulkAsync(x => x
-            .Update<TodoItemDocument, TodoItemDocument>(u => u
-                .Index(index)
-                .Id(item.Id)
-                .Doc(item)
-                .Upsert(item)
-            )
-        );
+        // var bulkResponse = await elasticClient.BulkAsync(x => x
+        //     .Update<TodoItemDocument, TodoItemDocument>(u => u
+        //         .Index(index)
+        //         .Id(item.Id)
+        //         .Doc(item)
+        //         .Upsert(item)
+        //     )
+        // );
+
+        var datas = new List<TodoItemDocument>
+        {
+            item
+        }.ToArray();
+        
+        var bulkResponse =  await elasticClient.BulkAsync(x => x.UpdateMany(datas, (descriptor, entry) =>
+        {
+            descriptor.Index(index);
+            descriptor.Doc(entry);
+            return descriptor.Upsert(entry);
+        }));
+        
+        //var bulkResponse = elasticClient.Index(item, i => i.Index(index));
         
         var sd = bulkResponse.IsValid;
     }

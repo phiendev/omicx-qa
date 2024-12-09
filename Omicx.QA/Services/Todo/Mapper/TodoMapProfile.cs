@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using Omicx.QA.EAV.Elasticsearch;
-using Omicx.QA.Entities;
 using Omicx.QA.Entities.Todo;
 using Omicx.QA.Services.Todo.Dto;
 
@@ -10,9 +9,8 @@ public class TodoMapProfile : Profile
 {
     public TodoMapProfile()
     {
-        CreateMap<TodoItem, TodoItemDto>();
-        CreateMap<TodoItemDto, TodoItem>();
-        CreateMap<TodoItem, TodoItemDocument>()
-            .ForMember(dest => dest.Keys, opt => opt.Ignore());
+        CreateMap<TodoItem, TodoItemDto>().ReverseMap();
+        CreateMap<TodoItem, TodoItemDocument>().ReverseMap();
+        CreateMap<TodoItemDto, TodoItemDocument>().ReverseMap();
     }
 }

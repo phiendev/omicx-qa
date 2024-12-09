@@ -24,10 +24,10 @@ public static class ElasticsearchExtensions
     }
 
     public static async Task<bool> CreateIndexAsync<TDoc>(
-        this IElasticClient client, CancellationToken token = default) where TDoc : class
+        this IElasticClient client, int? tenantId, CancellationToken token = default) where TDoc : class
     {
         if (client == null) return false;
-
+ 
         var esIndex = typeof(TDoc).GetCustomAttribute<ElasticsearchTypeAttribute>();
         if (esIndex == null
             || string.IsNullOrEmpty(esIndex.RelationName)
@@ -36,20 +36,22 @@ public static class ElasticsearchExtensions
                 $"{nameof(esIndex.RelationName)} and {nameof(esIndex.IdProperty)} required!"
             );
 
+        string indexName = tenantId is not null ? $"{tenantId}_{esIndex.RelationName}" : esIndex.RelationName;
+        
         var type = typeof(TDoc).GetProperty(esIndex.IdProperty);
         if (type == null)
             throw new ArgumentNullException($"Cannot find property {typeof(TDoc)}.{esIndex.IdProperty}");
 
         var dataType = GetDataType(type.PropertyType);
 
-        var existencyResponse = client.Indices.Exists(Indices.Index(esIndex.RelationName));
+        var existencyResponse = client.Indices.Exists(Indices.Index(indexName));
         if (existencyResponse.Exists)
         {
             return true;
         }
 
         var createRes = await client.LowLevel.Indices.CreateAsync<IndexResponse>(
-            esIndex.RelationName,
+            indexName,
             PostData.Serializable(new
             {
                 settings = new

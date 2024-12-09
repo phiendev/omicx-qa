@@ -90,7 +90,7 @@ public class TodoAppService : ApplicationService, ITodoAppService
         {
             var add = ObjectMapper.Map<TodoItemDto, TodoItem>(todo);
             
-            if (_customTenantId is not null)
+            if (await _customTenantId is not null)
             {
                 add.CustomTenantId =  await _customTenantId;
             }
@@ -98,10 +98,13 @@ public class TodoAppService : ApplicationService, ITodoAppService
             var result = await _todoItemRepository.InsertAsync(add, autoSave: true);
 
             if (result is null) throw new Exception("Failed to create todo");
-
-            // var item = ObjectMapper.Map<TodoItem, TodoItemDocument>(result);
-            //
-            // await TodoElasticService.UpsertTodoItem(_elasticClient, item);
+            
+            await TodoElasticService.UpsertTodoItem(_elasticClient, new TodoItemDocument
+            {
+                CustomTenantId = result.CustomTenantId,
+                Id = result.Id,
+                Text = result.Text
+            });
             
             return ObjectMapper.Map<TodoItem, TodoItemDto>(result);
         }
