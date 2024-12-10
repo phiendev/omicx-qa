@@ -109,15 +109,11 @@
 
   <ItemGroup>
     <Reference Include="CrmCloud.Kafka">
-      <HintPath>..\packages\CrmCloud.Kafka.dll</HintPath>
+      <HintPath>..\libs\CrmCloud.Kafka.dll</HintPath>
     </Reference>
     <Reference Include="CrmCloud.Kafka.Abp">
-      <HintPath>..\packages\CrmCloud.Kafka.Abp.dll</HintPath>
+      <HintPath>..\libs\CrmCloud.Kafka.Abp.dll</HintPath>
     </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Services\EmailReceived\" />
   </ItemGroup>
 
 </Project>

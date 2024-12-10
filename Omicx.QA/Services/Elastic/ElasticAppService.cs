@@ -29,11 +29,13 @@ public class ElasticAppService : ApplicationService, IElasticAppService
     }
 
     [HttpPost("create-indexes-elastic")]
-    public async Task<bool> CreateIndexesElastic()
+    public async Task CreateIndexesElastic()
     {
         try
         {
-            return await _elasticClient.CreateIndexAsync<TodoItemDocument>(await _customTenantId);
+            await _elasticClient.CreateIndexAsync<TodoItemDocument>(await _customTenantId);
+            await _elasticClient.CreateIndexAsync<CallAggregateDocument>(await _customTenantId);
+            await _elasticClient.CreateIndexAsync<EmailReceiveDocument>(await _customTenantId);
         }
         catch (Exception ex)
         {

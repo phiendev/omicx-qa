@@ -1,5 +1,6 @@
 ﻿using MongoDB.Driver;
-using Omicx.QA.Entities.CallAggregated;
+using Omicx.QA.EAV.DynamicAttribute;
+using Omicx.QA.Entities.CallAggregate;
 using Omicx.QA.Entities.Todo;
 using Volo.Abp.Data;
 using Volo.Abp.MongoDB;
@@ -13,8 +14,17 @@ public class QADbContext : AbpMongoDbContext
      * public IMongoCollection<Question> Questions => Collection<Question>();
      */
     public IMongoCollection<TodoItem> TodoItems => Collection<TodoItem>();
-    public IMongoCollection<CallAggregated> CallAggregateds => Collection<CallAggregated>();
+    public IMongoCollection<CallAggregate> CallAggregates => Collection<CallAggregate>();
+    public IMongoCollection<CallAggregateAttribute> CallAggregateAttributes => Collection<CallAggregateAttribute>();
 
+    #region Dynamic attribute
+
+    public IMongoCollection<DynamicEntitySchema> DynamicEntitySchemas => Collection<DynamicEntitySchema>();
+    public IMongoCollection<AttributeGroup> AttributeGroups => Collection<AttributeGroup>();
+    public IMongoCollection<DynamicAttribute> DynamicAttributes => Collection<DynamicAttribute>();
+
+    #endregion
+    
     protected override void CreateModel(IMongoModelBuilder modelBuilder)
     {
         base.CreateModel(modelBuilder);
@@ -23,9 +33,25 @@ public class QADbContext : AbpMongoDbContext
         {
             b.CollectionName = "TodoItems";
         });
-        modelBuilder.Entity<CallAggregated>(b =>
+        modelBuilder.Entity<CallAggregate>(b =>
         {
-            b.CollectionName = "CallAggregateds";
+            b.CollectionName = "CallAggregates";
+        });
+        modelBuilder.Entity<CallAggregateAttribute>(b =>
+        {
+            b.CollectionName = "CallAggregateAttributes";
+        });
+        modelBuilder.Entity<DynamicEntitySchema>(b =>
+        {
+            b.CollectionName = "DynamicEntitySchemas";
+        });
+        modelBuilder.Entity<AttributeGroup>(b =>
+        {
+            b.CollectionName = "AttributeGroups";
+        });
+        modelBuilder.Entity<DynamicAttribute>(b =>
+        {
+            b.CollectionName = "DynamicAttributes";
         });
     }
 }
