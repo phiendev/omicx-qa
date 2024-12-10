@@ -4,66 +4,69 @@ using System.Collections;
 namespace Omicx.QA.Elasticsearch.Documents;
 
 [Serializable]
-public abstract class NestedAttributes : IReadOnlyDictionary<string, object>
+public abstract class NestedAttributes :
+    IReadOnlyDictionary<string, object>,
+    IEnumerable<KeyValuePair<string, object>>,
+    IEnumerable,
+    IReadOnlyCollection<KeyValuePair<string, object>>
 {
     private readonly IDictionary<string, object> _pairs;
 
     public NestedAttributes()
     {
-        _pairs = new Dictionary<string, object>();
+        this._pairs = (IDictionary<string, object>)new Dictionary<string, object>();
     }
 
-    public NestedAttributes(IDictionary<string, object> pairs) : this()
+    public NestedAttributes(IDictionary<string, object> pairs)
+        : this()
     {
-        _pairs = pairs;
+        this._pairs = pairs;
     }
 
     public void Copy(IReadOnlyDictionary<string, object> input)
     {
-        if (input == null) return;
-
-        _pairs.Clear();
-        foreach (var (key, value) in input) _pairs.Add(key, value);
+        if (input == null)
+            return;
+        this._pairs.Clear();
+        foreach ((string key, object obj) in (IEnumerable<KeyValuePair<string, object>>)input)
+            this._pairs.Add(key, obj);
     }
 
-    [Ignore] //
+    [Ignore]
     public object this[string key]
     {
-        get => _pairs.ContainsKey(key) ? _pairs[key] : default;
+        get => !this._pairs.ContainsKey(key) ? (object)null : this._pairs[key];
         set
         {
-            if (_pairs.ContainsKey(key)) _pairs.Remove(key);
-
-            _pairs.Add(key, value);
+            if (this._pairs.ContainsKey(key))
+                this._pairs.Remove(key);
+            this._pairs.Add(key, value);
         }
     }
 
-    public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => _pairs.GetEnumerator();
+    public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => this._pairs.GetEnumerator();
 
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() => (IEnumerator)this.GetEnumerator();
 
-    [Ignore] //
-    public int Count => _pairs.Count;
+    [Ignore] public int Count => this._pairs.Count;
 
-    [Ignore] //
-    public IEnumerable<string> Keys => _pairs.Keys;
+    [Ignore] public IEnumerable<string> Keys => (IEnumerable<string>)this._pairs.Keys;
 
-    [Ignore] //
-    public IEnumerable<object> Values => _pairs.Values;
+    [Ignore] public IEnumerable<object> Values => (IEnumerable<object>)this._pairs.Values;
 
-    public bool ContainsKey(string key) => _pairs.ContainsKey(key);
+    public bool ContainsKey(string key) => this._pairs.ContainsKey(key);
 
-    public bool TryGetValue(string key, out object value) => _pairs.TryGetValue(key, out value);
-
-    public void Remove(string key)
+    public bool TryGetValue(string key, out object value)
     {
-        _pairs.Remove(key);
+        return this._pairs.TryGetValue(key, out value);
     }
+
+    public void Remove(string key) => this._pairs.Remove(key);
 
     public void Add(string key, object value)
     {
-        if (ContainsKey(key)) Remove(key);
-
-        _pairs.TryAdd(key, value);
+        if (this.ContainsKey(key))
+            this.Remove(key);
+        this._pairs.TryAdd<string, object>(key, value);
     }
 }

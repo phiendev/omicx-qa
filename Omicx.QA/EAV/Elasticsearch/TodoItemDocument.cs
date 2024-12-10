@@ -6,8 +6,8 @@ namespace Omicx.QA.EAV.Elasticsearch;
 [ElasticsearchType(RelationName = "todo-items", IdProperty = nameof(Id))]
 public class TodoItemDocument : ElasticNestedEntity
 {
-    public long Id { get; set; }
-    public string TenantId { get; set; }
+    public Guid Id { get; set; }
+    public Guid TenantId { get; set; }
     public int? CustomTenantId { get; set; }
     public string Text { get; set; }
     public string? ConcurrencyStamp { get; set; }

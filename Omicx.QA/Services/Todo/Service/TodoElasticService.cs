@@ -20,21 +20,36 @@ public static class TodoElasticService
         //     )
         // );
 
-        var datas = new List<TodoItemDocument>
+        // var datas = new TodoItemDocument[]
+        // {
+        //     item
+        // }.ToArray();
+        //
+        // var bulkResponse =  await elasticClient.BulkAsync(x => x.UpdateMany(datas, (descriptor, entry) =>
+        // {
+        //     descriptor.Index(index);
+        //     descriptor.Doc(entry);
+        //     return descriptor.Upsert(entry);
+        // }));
+        
+        // var bulkResponse = await elasticClient.BulkAsync(x => x
+        //     .Index(index)
+        //     .Update<TodoItemDocument>(u => u
+        //             .Id(item.Id)
+        //             .Doc(item)
+        //             .DocAsUpsert(true)
+        //     )
+        // );
+
+        var bulkResponse = await elasticClient.IndexAsync(item, i => i
+            .Index(index)
+            .Id(item.Id)
+        );
+        
+        if (!bulkResponse.IsValid)
         {
-            item
-        }.ToArray();
-        
-        var bulkResponse =  await elasticClient.BulkAsync(x => x.UpdateMany(datas, (descriptor, entry) =>
-        {
-            descriptor.Index(index);
-            descriptor.Doc(entry);
-            return descriptor.Upsert(entry);
-        }));
-        
-        //var bulkResponse = elasticClient.Index(item, i => i.Index(index));
-        
-        var sd = bulkResponse.IsValid;
+            Console.WriteLine(bulkResponse.DebugInformation);
+        }
     }
     
     public static async Task DeleteTodoItem(IElasticClient elasticClient, int? tenantId, long id)

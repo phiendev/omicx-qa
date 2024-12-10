@@ -2,7 +2,7 @@
 
 public class TodoItemDto
 {
-    public long Id { get; set; }
+    public Guid Id { get; set; }
     public int? CustomTenantId { get; set; }
     public string Text { get; set; } = string.Empty;
 }

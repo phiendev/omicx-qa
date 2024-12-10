@@ -19,13 +19,13 @@ public class TodoAppService : ApplicationService, ITodoAppService
 {
     private readonly ICurrentCustomTenant _currentCustomTenant;
     private readonly IElasticClient _elasticClient;
-    private readonly IRepository<TodoItem, long> _todoItemRepository;
+    private readonly IRepository<TodoItem, Guid> _todoItemRepository;
     private readonly Task<int?> _customTenantId;
     
     public TodoAppService(
         ICurrentCustomTenant currentCustomTenant,
         IElasticClient elasticClient,
-        IRepository<TodoItem, long> todoItemRepository
+        IRepository<TodoItem, Guid> todoItemRepository
         )
     {
         _currentCustomTenant = currentCustomTenant;
@@ -116,11 +116,13 @@ public class TodoAppService : ApplicationService, ITodoAppService
     }
     
     [HttpDelete("delete-todo")]
-    public async Task DeleteAsync(long id)
+    public async Task DeleteAsync(Guid id)
     {
         try
         {
-            await _todoItemRepository.DeleteAsync(id, autoSave: true);
+            var todo = await _todoItemRepository.GetAsync(x => x.Id == id);
+            if(todo == null) throw new Exception("Failed to delete todo");
+            await _todoItemRepository.DeleteAsync(todo, autoSave: true);
 
             // int? customTenantId = await _customTenantId;
             //

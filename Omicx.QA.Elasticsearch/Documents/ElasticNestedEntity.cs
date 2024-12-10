@@ -1,44 +1,55 @@
-using System.Reflection;
 using Nest;
 using Newtonsoft.Json.Linq;
+using System.Collections;
+using System.Reflection;
 using Omicx.QA.Elasticsearch.Extensions;
 
 namespace Omicx.QA.Elasticsearch.Documents;
 
-public abstract class ElasticNestedEntity : NestedAttributes, IElasticNestedEntity
+public abstract class ElasticNestedEntity :
+    NestedAttributes,
+    IElasticNestedEntity,
+    IReadOnlyDictionary<string, object>,
+    IEnumerable<KeyValuePair<string, object>>,
+    IEnumerable,
+    IReadOnlyCollection<KeyValuePair<string, object>>
 {
+    private readonly IDictionary<string, PropertyInfo> _declaredAttributes =
+        (IDictionary<string, PropertyInfo>)new Dictionary<string, PropertyInfo>();
+
     protected ElasticNestedEntity()
     {
-        var properties = GetType()
-            .GetProperties()
-            .Where(p => p.SetMethod != null
-                        && p.SetMethod.IsPublic
-                        && p.GetCustomAttribute<IgnoreAttribute>() == null);
-        foreach (var prop in properties) _declaredAttributes.TryAdd(prop.Name, prop);
+        foreach (PropertyInfo propertyInfo in
+                 ((IEnumerable<PropertyInfo>)this.GetType().GetProperties()).Where<PropertyInfo>(
+                     (Func<PropertyInfo, bool>)(p =>
+                         p.SetMethod != (MethodInfo)null && p.SetMethod.IsPublic &&
+                         p.GetCustomAttribute<IgnoreAttribute>() == null)))
+            this._declaredAttributes.TryAdd<string, PropertyInfo>(propertyInfo.Name, propertyInfo);
     }
-
-    private readonly IDictionary<string, PropertyInfo> _declaredAttributes = new Dictionary<string, PropertyInfo>();
 
     public object GetValue(string propName)
     {
-        if (string.IsNullOrEmpty(propName)) throw new ArgumentNullException(nameof(propName));
-
-        if (_declaredAttributes.ContainsKey(propName)) return _declaredAttributes[propName].GetValue(this);
-
-        if (ContainsKey(propName) && TryGetValue(propName, out var value)) return value;
-
-        throw new ArgumentException($"Property '{propName}' not exists in '{GetType().Name}'");
+        if (string.IsNullOrEmpty(propName))
+            throw new ArgumentNullException(nameof(propName));
+        if (this._declaredAttributes.ContainsKey(propName))
+            return this._declaredAttributes[propName].GetValue((object)this);
+        object obj;
+        if (this.ContainsKey(propName) && this.TryGetValue(propName, out obj))
+            return obj;
+        throw new ArgumentException("Property '" + propName + "' not exists in '" + this.GetType().Name + "'");
     }
 
     public new void Add(string key, object value)
     {
-        if (_declaredAttributes.ContainsKey(key.UpperFirst()))
+        if (this._declaredAttributes.ContainsKey(key.UpperFirst()))
         {
-            var propInfo = _declaredAttributes[key.UpperFirst()];
-            var type = Nullable.GetUnderlyingType(propInfo.PropertyType) ?? propInfo.PropertyType;
-            var safeValue = GetSafeValue(value, type);
-
-            propInfo.SetValue(this, safeValue);
+            PropertyInfo declaredAttribute = this._declaredAttributes[key.UpperFirst()];
+            Type type1 = Nullable.GetUnderlyingType(declaredAttribute.PropertyType);
+            if ((object)type1 == null)
+                type1 = declaredAttribute.PropertyType;
+            Type type2 = type1;
+            object safeValue = ElasticNestedEntity.GetSafeValue(value, type2);
+            declaredAttribute.SetValue((object)this, safeValue);
         }
 
         base.Add(key, value);
@@ -46,27 +57,38 @@ public abstract class ElasticNestedEntity : NestedAttributes, IElasticNestedEnti
 
     public void AfterPropertiesSet()
     {
-        foreach (var (field, info) in _declaredAttributes) Add(field, info.GetValue(this));
+        foreach ((string key, PropertyInfo propertyInfo) in (IEnumerable<KeyValuePair<string, PropertyInfo>>)this
+                     ._declaredAttributes)
+            this.Add(key, propertyInfo.GetValue((object)this));
     }
 
     private static object GetSafeValue(object value, Type type)
     {
-        if (value == null) return null;
-
+        if (value == null)
+            return (object)null;
         if (type.IsArray || type.IsGenericType)
+            return value is JArray jarray ? jarray.ToObject(type) : value;
+        if (type != typeof(DateTimeOffset))
+            return Convert.ChangeType(value, type);
+        object safeValue;
+        switch (value)
         {
-            if (value is JArray array) return array.ToObject(type);
-            return value;
+            case DateTime dateTime:
+                safeValue = !(dateTime == new DateTime()) ? (object)new DateTimeOffset(dateTime) : (object)null;
+                break;
+            case DateTimeOffset dateTimeOffset:
+                if (dateTimeOffset == new DateTimeOffset())
+                {
+                    safeValue = (object)null;
+                    break;
+                }
+
+                goto default;
+            default:
+                safeValue = Convert.ChangeType(value, type);
+                break;
         }
 
-        if (type != typeof(DateTimeOffset)) return Convert.ChangeType(value, type);
-
-        return value switch
-        {
-            DateTime dateTime when dateTime == default => null,
-            DateTime dateTime => new DateTimeOffset(dateTime),
-            DateTimeOffset dateTimeOffset when dateTimeOffset == default => null,
-            _ => Convert.ChangeType(value, type)
-        };
+        return safeValue;
     }
 }
