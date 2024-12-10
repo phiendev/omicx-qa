@@ -10,7 +10,7 @@ public class TodoMapProfile : Profile
     public TodoMapProfile()
     {
         CreateMap<TodoItem, TodoItemDto>().ReverseMap();
-        CreateMap<TodoItem, TodoItemDocument>().ReverseMap();
-        CreateMap<TodoItemDto, TodoItemDocument>().ReverseMap();
+        CreateMap<TodoItem, TodoItemDocument>()
+            .ForMember(dest => dest.Keys, opt => opt.Ignore());
     }
 }

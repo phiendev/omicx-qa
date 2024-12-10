@@ -99,12 +99,9 @@ public class TodoAppService : ApplicationService, ITodoAppService
 
             if (result is null) throw new Exception("Failed to create todo");
             
-            await TodoElasticService.UpsertTodoItem(_elasticClient, new TodoItemDocument
-            {
-                CustomTenantId = result.CustomTenantId,
-                Id = result.Id,
-                Text = result.Text
-            });
+            var todoItemDocument = ObjectMapper.Map<TodoItem, TodoItemDocument>(result);
+            
+            await TodoElasticService.UpsertTodoItem(_elasticClient, todoItemDocument);
             
             return ObjectMapper.Map<TodoItem, TodoItemDto>(result);
         }
@@ -120,13 +117,13 @@ public class TodoAppService : ApplicationService, ITodoAppService
     {
         try
         {
-            var todo = await _todoItemRepository.GetAsync(x => x.Id == id);
+            var todo = await _todoItemRepository.FindAsync(x => x.Id == id);
             if(todo == null) throw new Exception("Failed to delete todo");
             await _todoItemRepository.DeleteAsync(todo, autoSave: true);
 
-            // int? customTenantId = await _customTenantId;
-            //
-            // await TodoElasticService.DeleteTodoItem(_elasticClient, customTenantId, id);
+            int? customTenantId = await _customTenantId;
+            
+            await TodoElasticService.DeleteTodoItem(_elasticClient, customTenantId, id);
         }
         catch (Exception ex)
         {

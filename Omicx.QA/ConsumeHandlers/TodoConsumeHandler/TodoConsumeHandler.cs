@@ -6,10 +6,10 @@ namespace Omicx.QA.ConsumeHandlers.TodoConsumeHandler;
 
 public class TodoConsumeHandler : TransientJsonConsumeHandler<TodoRequest>
 {
-    private readonly Castle.Core.Logging.ILogger _logger;
+    private readonly ILogger<TodoConsumeHandler> _logger;
     
     public TodoConsumeHandler(
-        Castle.Core.Logging.ILogger logger
+        ILogger<TodoConsumeHandler> logger
     )
     {
         _logger = logger;
@@ -24,6 +24,6 @@ public class TodoConsumeHandler : TransientJsonConsumeHandler<TodoRequest>
 
     protected override void OnError(ConsumeContext<Null, TodoRequest> context, KafkaException exception)
     {
-        _logger.Error("TodoConsumeHandler ERROR", exception);
+        _logger.LogError("TodoConsumeHandler ERROR", exception);
     }
 }

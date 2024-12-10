@@ -33,33 +33,7 @@ public class ElasticAppService : ApplicationService, IElasticAppService
     {
         try
         {
-            int? customTenantId = await _customTenantId;
-            
-            foreach (var indice in _indices)
-            {
-                string index = $"{customTenantId}_{indice}";
-                var indexExistsResponse = await _elasticClient.Indices.ExistsAsync(index);
-                if (!indexExistsResponse.Exists)
-                {
-                    var createIndexResponse = await _elasticClient.Indices.CreateAsync(index, c => c
-                        .Settings(s => s
-                            .NumberOfShards(1)
-                            .NumberOfReplicas(1)
-                        )
-                        .Map(m => m
-                            .AutoMap()
-                        )
-                    );
-                    if (createIndexResponse.IsValid) Logger.LogInformation($"Index '{index}' created successfully.");
-                    else
-                        Logger.LogError(
-                            $"Failed to create index '{index}': {createIndexResponse.ServerError?.Error?.Reason}");
-                }
-                else Logger.LogInformation($"Index '{index}' already exists.");
-            }
-
-            return true;
-            //return await _elasticClient.CreateIndexAsync<TodoItemDocument>(await _customTenantId);
+            return await _elasticClient.CreateIndexAsync<TodoItemDocument>(await _customTenantId);
         }
         catch (Exception ex)
         {

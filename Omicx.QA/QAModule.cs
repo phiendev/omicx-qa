@@ -1,4 +1,5 @@
 ﻿using CrmCloud.Kafka;
+using CrmCloud.Kafka.Abp;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Extensions.DependencyInjection;
@@ -402,26 +403,37 @@ public class QAModule : AbpModule
         app.UseAuditing();
         app.UseAbpSerilogEnrichers();
         app.UseConfiguredEndpoints();
+
+        ConfigureListenTopicKafka(context);
     }
 
     private void ConfigureRegisterKafka(ServiceConfigurationContext context)
     {
-        // context.Services.UseKafkaPubSub(
-        //     new[] { GetType().Assembly },
-        //     installer => installer.UseConfigDiscovery(_ => new FileBasedConfigDiscoveryStrategy())
-        // );
+        context.Services.AddSingleton<IKafkaPubSub, KafkaPubSub>();
+        context.Services.UseKafkaPubSub(
+            new[] { GetType().Assembly },
+            installer => installer.UseConfigDiscovery(_ => new FileBasedConfigDiscoveryStrategy())
+        );
+    }
+
+    private void ConfigureListenTopicKafka(ApplicationInitializationContext context)
+    {
+        var kafkaPubSub = context.ServiceProvider.GetRequiredService<IKafkaPubSub>();
+        var consumeHandlers = context.ServiceProvider.GetServices<IConsumeHandler>();
+        
+        var compositeSubscriber = kafkaPubSub.CompositeSubscriberFor(consumeHandlers);
+        compositeSubscriber.Subscribe();
+        compositeSubscriber.StartPolling(default);
     }
 
     private void ConfigureRegisterElasticsearchClient(ServiceConfigurationContext context)
     {
-        var configuration = context.Services.GetConfiguration();
-        var elasticsearchUri = configuration["Elasticsearch:ConnectionStrings"] ?? "http://localhost:9200";
-
-        var settings = new ConnectionSettings(new Uri(elasticsearchUri));
-
-        var elasticClient = new ElasticClient(settings);
-
-        context.Services.AddSingleton<IElasticClient>(elasticClient);
+        context.Services.AddSingleton<IElasticsearchManager, ElasticsearchManager>();
+        context.Services.AddSingleton<IElasticClient>(provider =>
+        {
+            var elasticsearchManager = provider.GetRequiredService<IElasticsearchManager>();
+            return elasticsearchManager.CreateClient();
+        });
     }
 
     private void ConfigureRegisterAddScopeds(ServiceConfigurationContext context)

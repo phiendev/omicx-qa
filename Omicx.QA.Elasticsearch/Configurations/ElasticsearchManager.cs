@@ -1,6 +1,8 @@
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Text;
 using Elasticsearch.Net;
+using Microsoft.Extensions.Logging;
 using Nest;
 using Nest.JsonNetSerializer;
 using Omicx.QA.Elasticsearch.Extensions;
@@ -102,6 +104,17 @@ public class ElasticsearchManager : IElasticsearchManager
         var nodePool = ElasticConnectionPool(config.ConnectionStrings);
         var connectionSettings = new ConnectionSettings(nodePool, JsonNetSerializer.Default);
         connectionSettings.EnableApiVersioningHeader();
+            connectionSettings.EnableDebugMode(cd =>
+            {
+                var requestJson = cd.RequestBodyInBytes == null
+                    ? null
+                    : Encoding.UTF8.GetString(cd.RequestBodyInBytes);
+ 
+                var responseJson = cd.RequestBodyInBytes == null
+                    ? null
+                    : Encoding.UTF8.GetString(cd.ResponseBodyInBytes);
+            });
+        
 
         if (!string.IsNullOrEmpty(config.Username))
             connectionSettings.BasicAuthentication(config.Username, config.Password);

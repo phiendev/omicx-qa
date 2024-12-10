@@ -8,6 +8,7 @@ using Omicx.QA.Elasticsearch.Configurations;
 using Omicx.QA.Elasticsearch.Documents;
 using Omicx.QA.Elasticsearch.Enums;
 using Omicx.QA.Elasticsearch.Requests;
+using MatchType = Nest.MatchType;
 
 namespace Omicx.QA.Elasticsearch.Extensions;
 
@@ -50,39 +51,98 @@ public static class ElasticsearchExtensions
             return true;
         }
 
-        var createRes = await client.LowLevel.Indices.CreateAsync<IndexResponse>(
-            indexName,
-            PostData.Serializable(new
-            {
-                settings = new
-                {
-                    analysis = new
-                    {
-                        char_filter = new { digits_only = new { type = "pattern_replace", pattern = "[^\\d]" } },
-                        filter = new
-                        {
-                            _8_digits_min = new { type = "length", min = 8 },
-                            not_empty = new { type = "length", min = 1 }
-                        },
-                        analyzer = new
-                        {
-                            accents = new
-                            {
-                                filter = new[] { "lowercase", "asciifolding" },
-                                tokenizer = "whitespace",
-                                type = "custom"
-                            },
-                            digits = new { tokenizer = "numeric_tokenizer" }
-                        },
-                        tokenizer =
-                            new
-                            {
-                                numeric_tokenizer = new { type = "ngram", token_chars = new[] { "letter", "digit" } }
-                            }
-                    }
-                },
-                mappings = IndexMapping(client.FieldName(esIndex.IdProperty), dataType)
-            }), ctx: token);
+        // var createRes = await client.LowLevel.Indices.CreateAsync<IndexResponse>(
+        //     indexName,
+        //     PostData.Serializable(new
+        //     {
+        //         settings = new
+        //         {
+        //             analysis = new
+        //             {
+        //                 char_filter = new { digits_only = new { type = "pattern_replace", pattern = "[^\\d]" } },
+        //                 filter = new
+        //                 {
+        //                     _8_digits_min = new { type = "length", min = 8 },
+        //                     not_empty = new { type = "length", min = 1 }
+        //                 },
+        //                 analyzer = new
+        //                 {
+        //                     accents = new
+        //                     {
+        //                         filter = new[] { "lowercase", "asciifolding" },
+        //                         tokenizer = "whitespace",
+        //                         type = "custom"
+        //                     },
+        //                     digits = new { tokenizer = "numeric_tokenizer" }
+        //                 },
+        //                 tokenizer =
+        //                     new
+        //                     {
+        //                         numeric_tokenizer = new { type = "ngram", token_chars = new[] { "letter", "digit" } }
+        //                     }
+        //             }
+        //         },
+        //         mappings = IndexMapping(client.FieldName(esIndex.IdProperty), dataType)
+        //     }), ctx: token);
+
+        var createRes = await client.Indices.CreateAsync(indexName, c => c
+            .Settings(s => s
+                .Analysis(a => a
+                    .CharFilters(cf => cf
+                        .PatternReplace("digits_only", pr => pr.Pattern("[^\\d]"))
+                    )
+                    .Analyzers(an => an
+                        .Custom("accents", ca => ca
+                            .Tokenizer("standard")
+                            .Filters("lowercase", "asciifolding")
+                        )
+                        .Custom("digits", ca => ca
+                            .Tokenizer("standard")
+                        )
+                    )
+                )
+            )
+            .Map<TDoc>(m => m
+                .AutoMap()
+                .DynamicTemplates(dt => dt
+                    .DynamicTemplate("string_accents_and_raw", t => t
+                        .Unmatch("^([a-z_]+)([a-zA-Z0-9_]+)(_num)$")
+                        .MatchMappingType("string")
+                        .MatchPattern(MatchType.Regex)
+                        .Mapping(map => map
+                            .Text(tx => tx
+                                .Analyzer("accents")
+                                .Fields(f => f
+                                    .Keyword(k => k
+                                        .Name("raw")
+                                        .IgnoreAbove(256)
+                                    )
+                                )
+                            )
+                        )
+                    )
+                    .DynamicTemplate("numeric_full_text", t => t
+                        .Match("^([a-z_]+)([a-zA-Z0-9_]+)(_num)$")
+                        .MatchMappingType("string")
+                        .MatchPattern(MatchType.Regex)
+                        .Mapping(map => map
+                            .Text(tx => tx
+                                .Fields(f => f
+                                    .Text(txf => txf
+                                        .Name("num")
+                                        .Analyzer("digits")
+                                    )
+                                    .Keyword(k => k
+                                        .Name("raw")
+                                        .IgnoreAbove(256)
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            ), token);
+
 
         return createRes.IsValid;
     }
@@ -419,6 +479,8 @@ public static class ElasticsearchExtensions
         if (type == typeof(int)) return "integer";
 
         if (type == typeof(short)) return "short";
+
+        if (type == typeof(Guid)) return "keyword";
 
         return "text";
     }
