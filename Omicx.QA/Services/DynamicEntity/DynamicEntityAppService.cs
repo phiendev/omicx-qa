@@ -2,7 +2,7 @@
 using Omicx.QA.EAV.DynamicEntity;
 using Omicx.QA.MultiTenancy.Customs;
 using Omicx.QA.Services.DynamicEntity.Dto;
-using Omicx.QA.Services.DynamicEntity.Service;
+using Omicx.QA.Services.Elastic;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Users;
@@ -18,7 +18,7 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
     private readonly IRepository<DynamicEntitySchema, Guid> _dynamicEntitySchemaRepository;
     private readonly IRepository<AttributeGroup, Guid> _attributeGroupRepository;
     private readonly IRepository<DynamicAttribute, Guid> _dynamicAttributeRepository;
-    private readonly DynamicEntityElasticService _dynamicEntityElasticService;
+    private readonly IDynamicEntityElasticService _dynamicEntityElasticService;
     private readonly Task<int?> _customTenantId;
     
     public DynamicEntityAppService(
@@ -28,7 +28,7 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
         IRepository<DynamicEntitySchema, Guid> dynamicEntitySchemaRepository,
         IRepository<AttributeGroup, Guid> attributeGroupRepository,
         IRepository<DynamicAttribute, Guid> dynamicAttributeRepository,
-        DynamicEntityElasticService dynamicEntityElasticService
+        IDynamicEntityElasticService dynamicEntityElasticService
         )
     {
         _currentCustomTenant = currentCustomTenant;
@@ -39,6 +39,28 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
         _attributeGroupRepository = attributeGroupRepository;
         _dynamicAttributeRepository = dynamicAttributeRepository;
         _customTenantId = _currentCustomTenant.GetCustomTenantIdAsync();
+    }
+
+    [HttpPost("sync-schema")]
+    public async Task SyncScheme()
+    {
+        try
+        {
+            var schemas = await _dynamicEntitySchemaRepository.GetListAsync();
+            var parallelOptions = new ParallelOptions
+            {
+                MaxDegreeOfParallelism = 5
+            };
+            await Parallel.ForEachAsync(schemas, parallelOptions, async (schema, cancellationToken) =>
+            {
+                await _dynamicEntityElasticService.SyncSchema(schema.Id);
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to sync schema");
+            throw new Exception("Failed to create schema");
+        }
     }
 
     [HttpPost("create-schema")]
@@ -100,9 +122,9 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
             var delete = await _dynamicEntitySchemaRepository.FindAsync(x => x.Id == id);
             if(delete is null) throw new Exception("Not found");
             
-            await _dynamicEntityElasticService.DeleteSchema(id);
-            
             await _dynamicEntitySchemaRepository.DeleteAsync(delete, autoSave: true);
+            
+            await _dynamicEntityElasticService.DeleteSchema(id);
         }
         catch (Exception ex)
         {
@@ -124,7 +146,8 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
             
             var result = await _attributeGroupRepository.InsertAsync(add, autoSave: true);
 
-            if(add.DynamicEntitySchemaId is not null) await _dynamicEntityElasticService.UpsertAttributeGroup(add.DynamicEntitySchemaId);
+            if (add.DynamicEntitySchemaId is not null)
+                await _dynamicEntityElasticService.SyncSchema(result.DynamicEntitySchemaId);
             
             return ObjectMapper.Map<AttributeGroup, AttributeGroupDto>(result);
         }
@@ -143,6 +166,7 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
             var update = await _attributeGroupRepository.FindAsync(x => x.Id == item.Id);
             if(update is null) throw new Exception("Not found");
 
+            update.AttributeGroupCode = item.AttributeGroupCode;
             update.AttributeGroupName = item.AttributeGroupName;
             update.DynamicEntitySchemaId = item.DynamicEntitySchemaId;
             update.LastModifierId = _currentUser.Id;
@@ -150,7 +174,8 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
             
             var result = await _attributeGroupRepository.UpdateAsync(update, autoSave: true);
 
-            await _dynamicEntityElasticService.UpsertAttributeGroup(result.DynamicEntitySchemaId);
+            if (result.DynamicEntitySchemaId is not null)
+                await _dynamicEntityElasticService.SyncSchema(result.DynamicEntitySchemaId);
             
             return ObjectMapper.Map<AttributeGroup, AttributeGroupDto>(result);
         }
@@ -169,9 +194,10 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
             var delete = await _attributeGroupRepository.FindAsync(x => x.Id == id);
             if(delete is null) throw new Exception("Not found");
             
-            if(delete.DynamicEntitySchemaId is not null) await _dynamicEntityElasticService.DeleteAttributeGroup(delete.DynamicEntitySchemaId, id);
-            
             await _attributeGroupRepository.DeleteAsync(delete, autoSave: true);
+            
+            if(delete.DynamicEntitySchemaId is not null)
+                await _dynamicEntityElasticService.SyncSchema(delete.DynamicEntitySchemaId);
         }
         catch (Exception ex)
         {
@@ -192,8 +218,9 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
             add.CreationTime = DateTime.Now;
             
             var result = await _dynamicAttributeRepository.InsertAsync(add, autoSave: true);
-            
-            if(add.DynamicEntitySchemaId is not null && add.AttributeGroupId is not null) await _dynamicEntityElasticService.UpsertDynamicAttribute(add.DynamicEntitySchemaId, add.AttributeGroupId);
+
+            if (add.DynamicEntitySchemaId is not null)
+                await _dynamicEntityElasticService.SyncSchema(result.DynamicEntitySchemaId);
             
             return ObjectMapper.Map<DynamicAttribute, DynamicAttributeDto>(result);
         }
@@ -224,6 +251,9 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
             
             var result = await _dynamicAttributeRepository.UpdateAsync(update, autoSave: true);
             
+            if (result.DynamicEntitySchemaId is not null)
+                await _dynamicEntityElasticService.SyncSchema(result.DynamicEntitySchemaId);
+            
             return ObjectMapper.Map<DynamicAttribute, DynamicAttributeDto>(result);
         }
         catch (Exception ex)
@@ -242,6 +272,9 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
             if(delete is null) throw new Exception("Not found");
 
             await _dynamicAttributeRepository.DeleteAsync(delete, autoSave: true);
+            
+            if(delete.DynamicEntitySchemaId is not null)
+                await _dynamicEntityElasticService.SyncSchema(delete.DynamicEntitySchemaId);
         }
         catch (Exception ex)
         {

@@ -8,6 +8,8 @@ public class AttributeGroupDto
     
     public int? CustomTenantId { get; set; }
     
+    public required string AttributeGroupCode { get; set; }
+    
     public string? AttributeGroupName { get; set; }
     
     public Guid? DynamicEntitySchemaId { get; set; }

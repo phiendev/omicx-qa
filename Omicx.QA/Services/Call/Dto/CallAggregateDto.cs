@@ -1,8 +1,9 @@
-﻿using Volo.Abp.Domain.Entities.Auditing;
+using Omicx.QA.Entities;
+using Omicx.QA.Entities.CallAggregate;
 
-namespace Omicx.QA.Entities.CallAggregate;
+namespace Omicx.QA.Services.Call.Dto;
 
-public class CallAggregate : FullAuditedAggregateRoot<Guid> 
+public class CallAggregateDto
 {
     public virtual required string CallId { get; set; }
     public virtual Guid? TenantId { get; set; }
@@ -11,5 +12,4 @@ public class CallAggregate : FullAuditedAggregateRoot<Guid>
     public virtual string? RecordingUrl { get; set; }
     public virtual string? Content { get; set; }
     public virtual object? Links { get; set; }
-    public virtual List<CallAggregateAttribute>? CallAggregateAttributes { get; set; }
 }

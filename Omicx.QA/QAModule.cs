@@ -12,7 +12,7 @@ using Omicx.QA.Elasticsearch;
 using Omicx.QA.Elasticsearch.Configurations;
 using Omicx.QA.Mongo;
 using Omicx.QA.MultiTenancy.Customs;
-using Omicx.QA.Services.DynamicEntity.Service;
+using Omicx.QA.Services.Elastic;
 using OpenIddict.Validation.AspNetCore;
 using Volo.Abp;
 using Volo.Abp.Uow;

@@ -30,6 +30,8 @@ public class AttributeGroupDocument
     
     public int? CustomTenantId { get; set; }
     
+    public required string AttributeGroupCode { get; set; }
+    
     public string? AttributeGroupName { get; set; }
     
     public Guid? DynamicEntitySchemaId { get; set; }
@@ -59,4 +61,6 @@ public class DynamicAttributeDocument
     public string? DesignerOptions { get; set; }
     
     public bool IsActive { get; set; }
+    
+    public int? Order { get; set; }
 }

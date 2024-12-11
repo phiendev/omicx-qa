@@ -4,6 +4,7 @@ namespace Omicx.QA.Services.DynamicEntity;
 
 public interface IDynamicEntityAppService
 {
+    Task SyncScheme();
     Task<DynamicEntitySchemaDto> CreateSchema(DynamicEntitySchemaDto item);
     Task<DynamicEntitySchemaDto> UpdateSchema(DynamicEntitySchemaDto item);
     Task DeleteSchema(Guid id);
