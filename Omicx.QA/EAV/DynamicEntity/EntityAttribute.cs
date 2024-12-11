@@ -2,7 +2,7 @@
 using Omicx.QA.Enums;
 using Volo.Abp.Domain.Entities.Auditing;
 
-namespace Omicx.QA.EAV.DynamicAttribute;
+namespace Omicx.QA.EAV.DynamicEntity;
 
 public class EntityAttribute<T> : FullAuditedAggregateRoot<Guid>, IEntityAttribute, IDynamicAttribute
 {

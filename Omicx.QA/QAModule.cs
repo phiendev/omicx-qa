@@ -12,6 +12,7 @@ using Omicx.QA.Elasticsearch;
 using Omicx.QA.Elasticsearch.Configurations;
 using Omicx.QA.Mongo;
 using Omicx.QA.MultiTenancy.Customs;
+using Omicx.QA.Services.DynamicEntity.Service;
 using OpenIddict.Validation.AspNetCore;
 using Volo.Abp;
 using Volo.Abp.Uow;
@@ -440,5 +441,6 @@ public class QAModule : AbpModule
     {
         context.Services.AddScoped<IMongoDatabaseProvider, MongoDatabaseProvider>();
         context.Services.AddScoped<ICurrentCustomTenant, CurrentCustomTenant>();
+        context.Services.AddSingleton<IDynamicEntityElasticService, DynamicEntityElasticService>();
     }
 }

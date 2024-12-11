@@ -36,6 +36,7 @@ public class ElasticAppService : ApplicationService, IElasticAppService
             await _elasticClient.CreateIndexAsync<TodoItemDocument>(await _customTenantId);
             await _elasticClient.CreateIndexAsync<CallAggregateDocument>(await _customTenantId);
             await _elasticClient.CreateIndexAsync<EmailReceiveDocument>(await _customTenantId);
+            await _elasticClient.CreateIndexAsync<DynamicEntitySchemaDocument>(await _customTenantId);
         }
         catch (Exception ex)
         {

@@ -1,4 +1,4 @@
-﻿using Omicx.QA.EAV.DynamicAttribute;
+﻿using Omicx.QA.EAV.DynamicEntity;
 
 namespace Omicx.QA.Entities.CallAggregate;
 
