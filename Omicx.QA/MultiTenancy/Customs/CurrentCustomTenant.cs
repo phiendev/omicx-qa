@@ -32,8 +32,7 @@ public class CurrentCustomTenant : ITransientDependency, ICurrentCustomTenant
     {
         if (_currentTenant.Id.HasValue)
         {
-            var database = await _mongoDatabaseProvider.GetDatabaseAsync();
-            var collection = database.GetCollection<CustomTenant>(CollectionName);
+            var collection = await _mongoDatabaseProvider.GetCollectionAsync<CustomTenant>(CollectionName);
             var filter = Builders<CustomTenant>.Filter.Eq(t => t.Id, _currentTenant.Id);
             var tenant = await collection.Find(filter).FirstOrDefaultAsync();
             if(tenant is not null) return tenant.CustomTenantId;

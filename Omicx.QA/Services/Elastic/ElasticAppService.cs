@@ -10,9 +10,9 @@ namespace Omicx.QA.Services.Elastic;
 [Route("api/app/elastic")]
 public class ElasticAppService : ApplicationService, IElasticAppService
 {
+    private readonly ICurrentCustomTenant _currentCustomTenant;
     private readonly IElasticClient _elasticClient;
     private string[] _indices;
-    private Task<int?> _customTenantId;
 
     public ElasticAppService(
         ICurrentCustomTenant currentCustomTenant,
@@ -20,10 +20,10 @@ public class ElasticAppService : ApplicationService, IElasticAppService
         IElasticClient elasticClient
     )
     {
+        _currentCustomTenant = currentCustomTenant;
         _elasticClient = elasticClient;
         _indices = configuration.GetSection("Elasticsearch:Indices")?.Get<string[]>()
                    ?? Array.Empty<string>();
-        _customTenantId = currentCustomTenant.GetCustomTenantIdAsync();
     }
 
     [HttpPost("create-indexes-elastic")]
@@ -31,13 +31,13 @@ public class ElasticAppService : ApplicationService, IElasticAppService
     {
         try
         {
-            int? customTenantId = await _customTenantId;
+            int? customTenantId = await _currentCustomTenant.GetCustomTenantIdAsync();
             if(customTenantId is not null)
             {
-                await _elasticClient.CreateIndexAsync<TodoItemDocument>(await _customTenantId);
-                await _elasticClient.CreateIndexAsync<CallAggregateDocument>(await _customTenantId);
-                await _elasticClient.CreateIndexAsync<EmailReceiveDocument>(await _customTenantId);
-                await _elasticClient.CreateIndexAsync<DynamicEntitySchemaDocument>(await _customTenantId);
+                await _elasticClient.CreateIndexAsync<TodoItemDocument>(customTenantId);
+                await _elasticClient.CreateIndexAsync<CallAggregateDocument>(customTenantId);
+                await _elasticClient.CreateIndexAsync<EmailReceiveDocument>(customTenantId);
+                await _elasticClient.CreateIndexAsync<DynamicEntitySchemaDocument>(customTenantId);
             }
         }
         catch (Exception ex)

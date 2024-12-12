@@ -104,6 +104,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Omicx.QA.Common\Omicx.QA.Common.csproj" />
     <ProjectReference Include="..\Omicx.QA.Elasticsearch\Omicx.QA.Elasticsearch.csproj" />
   </ItemGroup>
 

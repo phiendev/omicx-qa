@@ -9,4 +9,5 @@ public interface IDynamicEntityElasticService
     Task DeleteSchema(Guid id);
     Task SyncSchema(Guid? dynamicEntitySchemaId);
     Task UpsertCallAggregate(CallAggregate item, List<CallAggregateAttribute>? callAggregateAttributes);
+    Task DeleteCallAggregate(Guid id);
 }

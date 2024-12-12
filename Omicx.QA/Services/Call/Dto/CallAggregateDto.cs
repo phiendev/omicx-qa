@@ -5,11 +5,13 @@ namespace Omicx.QA.Services.Call.Dto;
 
 public class CallAggregateDto
 {
-    public virtual required string CallId { get; set; }
-    public virtual Guid? TenantId { get; set; }
-    public virtual int? CustomTenantId { get; set; }
-    public virtual Assignee? Assignee { get; set; }
-    public virtual string? RecordingUrl { get; set; }
-    public virtual string? Content { get; set; }
-    public virtual Dictionary<string, string>? Links { get; set; }
+    public Guid? Id { get; set; }
+    public required string CallId { get; set; }
+    public Guid? TenantId { get; set; }
+    public int? CustomTenantId { get; set; }
+    public Assignee? Assignee { get; set; }
+    public string? RecordingUrl { get; set; }
+    public string? Content { get; set; }
+    public Dictionary<string, string>? Links { get; set; }
+    public List<CallAggregateAttributeDto>? CallAggregateAttributes { get; set; }
 }

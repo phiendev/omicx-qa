@@ -20,7 +20,6 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
     private readonly IRepository<AttributeGroup, Guid> _attributeGroupRepository;
     private readonly IRepository<DynamicAttribute, Guid> _dynamicAttributeRepository;
     private readonly IDynamicEntityElasticService _dynamicEntityElasticService;
-    private readonly Task<int?> _customTenantId;
     
     public DynamicEntityAppService(
         ICurrentCustomTenant currentCustomTenant,
@@ -39,7 +38,6 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
         _dynamicEntityElasticService = dynamicEntityElasticService;
         _attributeGroupRepository = attributeGroupRepository;
         _dynamicAttributeRepository = dynamicAttributeRepository;
-        _customTenantId = _currentCustomTenant.GetCustomTenantIdAsync();
     }
 
     [HttpPost("sync-schema")]
@@ -71,7 +69,7 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
         {
             var add = ObjectMapper.Map<DynamicEntitySchemaDto, DynamicEntitySchema>(item);
             add.TenantId = _currentCustomTenant.Id;
-            add.CustomTenantId = await _customTenantId;
+            add.CustomTenantId = await _currentCustomTenant.GetCustomTenantIdAsync();
             add.CreatorId = _currentUser.Id;
             add.CreationTime = DateTime.Now;
             
@@ -141,7 +139,7 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
         {
             var add = ObjectMapper.Map<AttributeGroupDto, AttributeGroup>(item);
             add.TenantId = _currentCustomTenant.Id;
-            add.CustomTenantId = await _customTenantId;
+            add.CustomTenantId = await _currentCustomTenant.GetCustomTenantIdAsync();
             add.CreatorId = _currentUser.Id;
             add.CreationTime = DateTime.Now;
             
@@ -221,7 +219,7 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
             if(attributeGroup is not null) add.AttributeGroupCode = attributeGroup.AttributeGroupCode;
             
             add.TenantId = _currentCustomTenant.Id;
-            add.CustomTenantId = await _customTenantId;
+            add.CustomTenantId = await _currentCustomTenant.GetCustomTenantIdAsync();
             add.CreatorId = _currentUser.Id;
             add.CreationTime = DateTime.Now;
             

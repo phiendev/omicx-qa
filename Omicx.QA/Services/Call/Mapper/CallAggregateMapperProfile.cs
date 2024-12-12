@@ -16,5 +16,7 @@ public class CallAggregateMapperProfile : Profile
         CreateMap<CallAggregate, CallAggregateDocument>()
             .DynamicAttributes(t => t.CallAggregateAttributes)
             .ForMember(dest => dest.Keys, opt => opt.Ignore());
+        
+        CreateMap<CallAggregateAttribute, CallAggregateAttributeDto>().ReverseMap();
     }
 }

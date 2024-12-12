@@ -66,8 +66,45 @@ public abstract class ElasticNestedEntity :
     {
         if (value == null)
             return (object)null;
+        if (type == typeof(Guid))
+            return Guid.TryParse(value.ToString(), out var guidValue) ? guidValue : null;
+        if (type.IsEnum)
+            return Enum.TryParse(type, value.ToString(), true, out var enumValue) ? enumValue : null;
+        if (type.IsClass && type != typeof(string))
+        {
+            if (value is JObject jObject)
+            {
+                return jObject.ToObject(type);
+            }
+
+            if (value is Dictionary<string, object> dictionary)
+            {
+                var jsonString = System.Text.Json.JsonSerializer.Serialize(dictionary);
+                return System.Text.Json.JsonSerializer.Deserialize(jsonString, type);
+            }
+        }
         if (type.IsArray || type.IsGenericType)
             return value is JArray jarray ? jarray.ToObject(type) : value;
+        if (type == typeof(Dictionary<string, string>))
+        {
+            if (value is JObject jObject)
+            {
+                return jObject.ToObject<Dictionary<string, string>>();
+            }
+
+            if (value is Dictionary<string, object> objDict)
+            {
+                return objDict.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value?.ToString() ?? string.Empty
+                );
+            }
+
+            if (value is string jsonString)
+            {
+                return System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(jsonString);
+            }
+        }
         if (type != typeof(DateTimeOffset))
             return Convert.ChangeType(value, type);
         object safeValue;

@@ -4,5 +4,5 @@ namespace Omicx.QA.Mongo;
 
 public interface IMongoDatabaseProvider
 {
-    Task<IMongoDatabase> GetDatabaseAsync();
+    Task<IMongoCollection<T>> GetCollectionAsync<T>(string collectionName);
 }

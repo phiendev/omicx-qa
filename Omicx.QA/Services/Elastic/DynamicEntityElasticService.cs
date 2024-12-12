@@ -12,13 +12,13 @@ namespace Omicx.QA.Services.Elastic;
 
 public class DynamicEntityElasticService : IDynamicEntityElasticService, ITransientDependency
 {
+    private readonly ICurrentCustomTenant _currentCustomTenant;
     private readonly ILogger<DynamicEntityElasticService> _logger;
     private readonly IMapper _mapper;
     private readonly IElasticClient _elasticClient;
     private readonly IRepository<DynamicEntitySchema, Guid> _dynamicEntitySchemaRepository;
     private readonly IRepository<AttributeGroup, Guid> _attributeGroupRepository;
     private readonly IRepository<DynamicAttribute, Guid> _dynamicAttributeRepository;
-    private readonly Task<int?> _customTenantId;
 
     public DynamicEntityElasticService(
         ICurrentCustomTenant currentCustomTenant,
@@ -30,13 +30,13 @@ public class DynamicEntityElasticService : IDynamicEntityElasticService, ITransi
         IRepository<DynamicAttribute, Guid> dynamicAttributeRepository
         )
     {
+        _currentCustomTenant = currentCustomTenant;
         _logger = logger;
         _mapper = mapper;
         _elasticClient = elasticClient;
         _dynamicEntitySchemaRepository = dynamicEntitySchemaRepository;
         _attributeGroupRepository = attributeGroupRepository;
         _dynamicAttributeRepository = dynamicAttributeRepository;
-        _customTenantId = currentCustomTenant.GetCustomTenantIdAsync();
     }
     
     public async Task UpsertSchema(DynamicEntitySchema item)
@@ -61,7 +61,7 @@ public class DynamicEntityElasticService : IDynamicEntityElasticService, ITransi
     
     public async Task DeleteSchema(Guid id)
     {
-        int? tenantId = await _customTenantId;
+        int? tenantId = await _currentCustomTenant.GetCustomTenantIdAsync();
         if (tenantId is null) return;
         var index = ElasticsearchExtensions.GetIndexName<DynamicEntitySchemaDocument>(tenantId);
         var bulkResponse = await _elasticClient.BulkAsync(x => x.Index(index)
@@ -78,7 +78,7 @@ public class DynamicEntityElasticService : IDynamicEntityElasticService, ITransi
     
     public async Task SyncSchema(Guid? dynamicEntitySchemaId)
     {
-        int? customTenantId = await _customTenantId;
+        int? customTenantId = await _currentCustomTenant.GetCustomTenantIdAsync();
         if (customTenantId is null) return;
         
         var indexName = ElasticsearchExtensions.GetIndexName<DynamicEntitySchemaDocument>(customTenantId);
@@ -124,7 +124,7 @@ public class DynamicEntityElasticService : IDynamicEntityElasticService, ITransi
 
     public async Task UpsertCallAggregate(CallAggregate item, List<CallAggregateAttribute>? callAggregateAttributes)
     {
-        int? customTenantId = await _customTenantId;
+        int? customTenantId = await _currentCustomTenant.GetCustomTenantIdAsync();
         if (customTenantId is null) return;
         
         var indexName = ElasticsearchExtensions.GetIndexName<CallAggregateDocument>(customTenantId);
@@ -141,6 +141,23 @@ public class DynamicEntityElasticService : IDynamicEntityElasticService, ITransi
                 .Id(document.Id)
                 .Doc(document)
                 .DocAsUpsert(true)
+            )
+        );
+        if (!bulkResponse.IsValid)
+        {
+            _logger.LogError(bulkResponse.DebugInformation);
+        }
+    }
+    
+    public async Task DeleteCallAggregate(Guid id)
+    {
+        int? tenantId = await _currentCustomTenant.GetCustomTenantIdAsync();
+        if (tenantId is null) return;
+        var index = ElasticsearchExtensions.GetIndexName<CallAggregateDocument>(tenantId);
+        var bulkResponse = await _elasticClient.BulkAsync(x => x.Index(index)
+            .Delete<CallAggregateDocument>(d => d
+                .Index(index)
+                .Id(id)
             )
         );
         if (!bulkResponse.IsValid)

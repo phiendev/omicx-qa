@@ -13,8 +13,14 @@ public class MongoDatabaseProvider : ITransientDependency, IMongoDatabaseProvide
     {
         _connectionStringResolver = connectionStringResolver;
     }
+    
+    public async Task<IMongoCollection<T>> GetCollectionAsync<T>(string collectionName)
+    {
+        var database = await GetDatabaseAsync();
+        return database.GetCollection<T>(collectionName);
+    }
 
-    public async Task<IMongoDatabase> GetDatabaseAsync()
+    private async Task<IMongoDatabase> GetDatabaseAsync()
     {
         var connectionString = await _connectionStringResolver.ResolveAsync("Default");
         var mongoUrl = new MongoUrl(connectionString);

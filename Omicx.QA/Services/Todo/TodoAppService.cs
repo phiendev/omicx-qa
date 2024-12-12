@@ -20,7 +20,6 @@ public class TodoAppService : ApplicationService, ITodoAppService
     private readonly ICurrentCustomTenant _currentCustomTenant;
     private readonly IElasticClient _elasticClient;
     private readonly IRepository<TodoItem, Guid> _todoItemRepository;
-    private readonly Task<int?> _customTenantId;
     
     public TodoAppService(
         ICurrentCustomTenant currentCustomTenant,
@@ -31,7 +30,6 @@ public class TodoAppService : ApplicationService, ITodoAppService
         _currentCustomTenant = currentCustomTenant;
         _elasticClient = elasticClient;
         _todoItemRepository = todoItemRepository;
-        _customTenantId = _currentCustomTenant.GetCustomTenantIdAsync();
     }
     
     [HttpGet("hello-world")]
@@ -90,10 +88,7 @@ public class TodoAppService : ApplicationService, ITodoAppService
         {
             var add = ObjectMapper.Map<TodoItemDto, TodoItem>(todo);
             
-            if (await _customTenantId is not null)
-            {
-                add.CustomTenantId =  await _customTenantId;
-            }
+            add.CustomTenantId = await _currentCustomTenant.GetCustomTenantIdAsync();
             
             var result = await _todoItemRepository.InsertAsync(add, autoSave: true);
 
@@ -121,7 +116,7 @@ public class TodoAppService : ApplicationService, ITodoAppService
             if(todo == null) throw new Exception("Failed to delete todo");
             await _todoItemRepository.DeleteAsync(todo, autoSave: true);
 
-            int? customTenantId = await _customTenantId;
+            int? customTenantId = await _currentCustomTenant.GetCustomTenantIdAsync();
             
             await TodoElasticService.DeleteTodoItem(_elasticClient, customTenantId, id);
         }
