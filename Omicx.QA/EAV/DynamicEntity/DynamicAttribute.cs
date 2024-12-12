@@ -10,8 +10,12 @@ public class DynamicAttribute : FullAuditedAggregateRoot<Guid>
     public virtual int? CustomTenantId { get; set; }
     
     public virtual Guid? DynamicEntitySchemaId { get; set; }
+    
+    public virtual string? EntityType { get; set; }
 
     public virtual Guid? AttributeGroupId { get; set; }
+    
+    public virtual string? AttributeGroupCode { get; set; }
     
     public virtual required DynamicAttributeType Type { get; set; }
     

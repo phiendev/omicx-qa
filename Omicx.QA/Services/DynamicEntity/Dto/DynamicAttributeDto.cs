@@ -11,8 +11,12 @@ public class DynamicAttributeDto
     public int? CustomTenantId { get; set; }
     
     public Guid? DynamicEntitySchemaId { get; set; }
+    
+    public string? EntityType { get; set; }
 
     public Guid? AttributeGroupId { get; set; }
+    
+    public string? AttributeGroupCode { get; set; }
     
     public required DynamicAttributeType Type { get; set; }
     

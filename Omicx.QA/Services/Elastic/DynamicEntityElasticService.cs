@@ -122,8 +122,30 @@ public class DynamicEntityElasticService : IDynamicEntityElasticService, ITransi
         }
     }
 
-    public async Task UpsertCallAggregate(CallAggregate item)
+    public async Task UpsertCallAggregate(CallAggregate item, List<CallAggregateAttribute>? callAggregateAttributes)
     {
-        throw new NotImplementedException();
+        int? customTenantId = await _customTenantId;
+        if (customTenantId is null) return;
+        
+        var indexName = ElasticsearchExtensions.GetIndexName<CallAggregateDocument>(customTenantId);
+        
+        item.CallAggregateAttributes = callAggregateAttributes;
+        
+        var document = _mapper.Map<CallAggregate, CallAggregateDocument>(item);
+        
+        document.AfterPropertiesSet();
+        
+        var bulkResponse = await _elasticClient.BulkAsync(b => b
+            .Index(indexName)
+            .Update<CallAggregateDocument>(u => u
+                .Id(document.Id)
+                .Doc(document)
+                .DocAsUpsert(true)
+            )
+        );
+        if (!bulkResponse.IsValid)
+        {
+            _logger.LogError(bulkResponse.DebugInformation);
+        }
     }
 }

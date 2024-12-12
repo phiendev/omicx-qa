@@ -14,4 +14,6 @@ public interface IDynamicEntityAppService
     Task<DynamicAttributeDto> CreateDynamicAttribute(DynamicAttributeDto item);
     Task<DynamicAttributeDto> UpdateDynamicAttribute(DynamicAttributeDto item);
     Task DeleteDynamicAttribute(Guid id);
+    Task<DynamicEntityDto> GetDynamicEntity(string entityType);
+    Dictionary<string, string> GetDynamicLink(string entityType, string id);
 }

@@ -1,4 +1,5 @@
-﻿using Volo.Abp.Domain.Entities.Auditing;
+﻿using MongoDB.Bson.Serialization.Attributes;
+using Volo.Abp.Domain.Entities.Auditing;
 
 namespace Omicx.QA.Entities.CallAggregate;
 
@@ -10,6 +11,7 @@ public class CallAggregate : FullAuditedAggregateRoot<Guid>
     public virtual Assignee? Assignee { get; set; }
     public virtual string? RecordingUrl { get; set; }
     public virtual string? Content { get; set; }
-    public virtual object? Links { get; set; }
+    public virtual Dictionary<string, string>? Links { get; set; }
+    [BsonIgnore]
     public virtual List<CallAggregateAttribute>? CallAggregateAttributes { get; set; }
 }

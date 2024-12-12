@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Update.Internal;
 using Omicx.QA.EAV.DynamicEntity;
 using Omicx.QA.MultiTenancy.Customs;
 using Omicx.QA.Services.DynamicEntity.Dto;
@@ -212,6 +213,13 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
         try
         {
             var add = ObjectMapper.Map<DynamicAttributeDto, DynamicAttribute>(item);
+            
+            var schema = await _dynamicEntitySchemaRepository.FindAsync(x => x.Id == item.DynamicEntitySchemaId);
+            if(schema is not null) add.EntityType = schema.EntityType;
+
+            var attributeGroup = await _attributeGroupRepository.FindAsync(x => x.Id == item.AttributeGroupId);
+            if(attributeGroup is not null) add.AttributeGroupCode = attributeGroup.AttributeGroupCode;
+            
             add.TenantId = _currentCustomTenant.Id;
             add.CustomTenantId = await _customTenantId;
             add.CreatorId = _currentUser.Id;
@@ -238,7 +246,13 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
         {
             var update = await _dynamicAttributeRepository.FindAsync(x => x.Id == item.Id);
             if(update is null) throw new Exception("Not found");
+            
+            var schema = await _dynamicEntitySchemaRepository.FindAsync(x => x.Id == item.DynamicEntitySchemaId);
+            if(schema is not null) update.EntityType = schema.EntityType;
 
+            var attributeGroup = await _attributeGroupRepository.FindAsync(x => x.Id == item.AttributeGroupId);
+            if(attributeGroup is not null) update.AttributeGroupCode = attributeGroup.AttributeGroupCode;
+            
             update.DynamicEntitySchemaId = item.DynamicEntitySchemaId;
             update.AttributeGroupId = item.AttributeGroupId;
             update.Type = item.Type;
@@ -280,6 +294,62 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
         {
             Logger.LogError(ex, "Failed to delete dynamic attribute");
             throw new Exception("Failed to delete dynamic attribute");
+        }
+    }
+
+    [HttpGet("{entityType}/schema")]
+    public async Task<DynamicEntityDto> GetDynamicEntity(string entityType)
+    {
+        try
+        {
+            var scheme = await _dynamicEntitySchemaRepository.FindAsync(x => x.EntityType == entityType);
+            if(scheme is null) throw new Exception("Entity Type not found.");
+
+            var attributeGroups =
+                await _attributeGroupRepository.GetListAsync(x => x.DynamicEntitySchemaId == scheme.Id);
+            var dynamicAttributes = await _dynamicAttributeRepository.GetListAsync(x =>
+                x.DynamicEntitySchemaId == scheme.Id);
+
+            var schemaMap = ObjectMapper.Map<DynamicEntitySchema, DynamicEntityDto>(scheme);
+            if(attributeGroups.Count > 0)
+                schemaMap.AttributeGroups = ObjectMapper.Map<List<AttributeGroup>, List<AttributeGroupDto>>(attributeGroups);
+            if(dynamicAttributes.Count > 0)
+                schemaMap.DynamicAttributes = ObjectMapper.Map<List<DynamicAttribute>, List<DynamicAttributeDto>>(dynamicAttributes);
+
+            return schemaMap;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get dynamic schema");
+            throw new Exception("Failed to get dynamic schema");
+        }
+    }
+
+    [HttpGet("{entityType}/{id}/link")]
+    public Dictionary<string, string> GetDynamicLink(string entityType, string id)
+    {
+        try
+        {
+            switch (entityType)
+            {
+                case "call-aggregate":
+                    return new Dictionary<string, string>
+                    {
+                        { "detail", $"/call/detail?id={id}" }
+                    };
+                case "email-receive":
+                    return new Dictionary<string, string>
+                    {
+                        { "detail", $"/call/detail?id={id}" }
+                    };
+                default:
+                    return new Dictionary<string, string>();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get dynamic link");
+            throw new Exception("Failed to get dynamic link");
         }
     }
 }

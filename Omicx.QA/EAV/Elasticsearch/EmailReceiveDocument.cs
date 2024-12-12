@@ -12,8 +12,8 @@ public class EmailReceiveDocument : ElasticNestedEntity
     public required string EmailId { get; set; }
     public Guid TenantId { get; set; }
     public int? CustomTenantId { get; set; }
-    public Assignee? AggregateAssignee { get; set; }
+    public Assignee? Assignee { get; set; }
     public string? RecordingUrl { get; set; }
     public string? Content { get; set; }
-    public List<CallAggregateAttribute>? Attributes { get; set; }
+    public object? Links { get; set; }
 }

@@ -12,6 +12,7 @@ public class DynamicEntityMapperProfile : Profile
         CreateMap<DynamicEntitySchema, DynamicEntitySchemaDto>().ReverseMap();
         CreateMap<AttributeGroup, AttributeGroupDto>().ReverseMap();
         CreateMap<DynamicAttribute, DynamicAttributeDto>().ReverseMap();
+        CreateMap<DynamicEntitySchema, DynamicEntityDto>();
         
         CreateMap<DynamicEntitySchema, DynamicEntitySchemaDocument>()
             .ForMember(dest => dest.Keys, opt => opt.Ignore());

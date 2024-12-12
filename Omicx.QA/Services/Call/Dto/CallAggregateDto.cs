@@ -11,5 +11,5 @@ public class CallAggregateDto
     public virtual Assignee? Assignee { get; set; }
     public virtual string? RecordingUrl { get; set; }
     public virtual string? Content { get; set; }
-    public virtual object? Links { get; set; }
+    public virtual Dictionary<string, string>? Links { get; set; }
 }
