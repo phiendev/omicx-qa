@@ -1,7 +1,6 @@
 ﻿using Nest;
 using Omicx.QA.Elasticsearch.Documents;
 using Omicx.QA.Entities;
-using Omicx.QA.Entities.CallAggregate;
 
 namespace Omicx.QA.EAV.Elasticsearch;
 

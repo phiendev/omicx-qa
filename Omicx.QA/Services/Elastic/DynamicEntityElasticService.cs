@@ -4,6 +4,7 @@ using Omicx.QA.EAV.DynamicEntity;
 using Omicx.QA.EAV.Elasticsearch;
 using Omicx.QA.Elasticsearch.Extensions;
 using Omicx.QA.Entities.CallAggregate;
+using Omicx.QA.Entities.EmailReceive;
 using Omicx.QA.MultiTenancy.Customs;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
@@ -156,6 +157,50 @@ public class DynamicEntityElasticService : IDynamicEntityElasticService, ITransi
         var index = ElasticsearchExtensions.GetIndexName<CallAggregateDocument>(tenantId);
         var bulkResponse = await _elasticClient.BulkAsync(x => x.Index(index)
             .Delete<CallAggregateDocument>(d => d
+                .Index(index)
+                .Id(id)
+            )
+        );
+        if (!bulkResponse.IsValid)
+        {
+            _logger.LogError(bulkResponse.DebugInformation);
+        }
+    }
+
+    public async Task UpsertEmailReceive(EmailReceive item, List<EmailReceiveAttribute>? emailReceiveAttributes)
+    {
+        int? customTenantId = await _currentCustomTenant.GetCustomTenantIdAsync();
+        if (customTenantId is null) return;
+        
+        var indexName = ElasticsearchExtensions.GetIndexName<EmailReceiveDocument>(customTenantId);
+        
+        item.EmailReceiveAttributes = emailReceiveAttributes;
+        
+        var document = _mapper.Map<EmailReceive, EmailReceiveDocument>(item);
+        
+        document.AfterPropertiesSet();
+        
+        var bulkResponse = await _elasticClient.BulkAsync(b => b
+            .Index(indexName)
+            .Update<EmailReceiveDocument>(u => u
+                .Id(document.Id)
+                .Doc(document)
+                .DocAsUpsert(true)
+            )
+        );
+        if (!bulkResponse.IsValid)
+        {
+            _logger.LogError(bulkResponse.DebugInformation);
+        }
+    }
+
+    public async Task DeleteEmailReceive(Guid id)
+    {
+        int? tenantId = await _currentCustomTenant.GetCustomTenantIdAsync();
+        if (tenantId is null) return;
+        var index = ElasticsearchExtensions.GetIndexName<EmailReceiveDocument>(tenantId);
+        var bulkResponse = await _elasticClient.BulkAsync(x => x.Index(index)
+            .Delete<EmailReceiveDocument>(d => d
                 .Index(index)
                 .Id(id)
             )

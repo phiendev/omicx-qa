@@ -295,7 +295,7 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
         }
     }
 
-    [HttpGet("{entityType}/schema")]
+    [HttpGet("{entityType}/attibute")]
     public async Task<DynamicEntityDto> GetDynamicEntity(string entityType)
     {
         try
@@ -338,7 +338,7 @@ public class DynamicEntityAppService : ApplicationService, IDynamicEntityAppServ
                 case "email-receive":
                     return new Dictionary<string, string>
                     {
-                        { "detail", $"/call/detail?id={id}" }
+                        { "detail", $"/email/detail?id={id}" }
                     };
                 default:
                     return new Dictionary<string, string>();

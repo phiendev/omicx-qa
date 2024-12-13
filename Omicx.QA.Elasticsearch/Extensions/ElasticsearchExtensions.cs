@@ -4,11 +4,9 @@ using System.Reflection;
 using AutoMapper;
 using Elasticsearch.Net;
 using Nest;
-using Omicx.QA.Elasticsearch.Configurations;
 using Omicx.QA.Elasticsearch.Documents;
 using Omicx.QA.Elasticsearch.Enums;
 using Omicx.QA.Elasticsearch.Requests;
-using MatchType = Nest.MatchType;
 
 namespace Omicx.QA.Elasticsearch.Extensions;
 
@@ -108,7 +106,7 @@ public static class ElasticsearchExtensions
                     .DynamicTemplate("string_accents_and_raw", t => t
                         .Unmatch("^([a-z_]+)([a-zA-Z0-9_]+)(_num)$")
                         .MatchMappingType("string")
-                        .MatchPattern(MatchType.Regex)
+                        .MatchPattern(Nest.MatchType.Regex)
                         .Mapping(map => map
                             .Text(tx => tx
                                 .Analyzer("accents")
@@ -124,7 +122,7 @@ public static class ElasticsearchExtensions
                     .DynamicTemplate("numeric_full_text", t => t
                         .Match("^([a-z_]+)([a-zA-Z0-9_]+)(_num)$")
                         .MatchMappingType("string")
-                        .MatchPattern(MatchType.Regex)
+                        .MatchPattern(Nest.MatchType.Regex)
                         .Mapping(map => map
                             .Text(tx => tx
                                 .Fields(f => f
@@ -189,6 +187,33 @@ public static class ElasticsearchExtensions
 
         foreach (var (k, v) in getResponse.Source) instance.Add(k, v);
 
+        return instance;
+    }
+    
+    public static async Task<TDocument> GetByEntityTypeAsync<TDocument>(this IElasticClient client,
+        string entityType,
+        int? tenantId,
+        CancellationToken token = default)
+        where TDocument : class, IElasticNestedEntity
+    {
+        if (client == null) throw new ArgumentNullException(nameof(client));
+        
+        var indexName = GetIndexName<TDocument>(tenantId);
+
+        var searchResponse = await client.SearchAsync<TDocument>(s => s
+            .Index(indexName)
+            .Query(q => q
+                .Term(t => t
+                    .Field("entityType.keyword")
+                    .Value(entityType)
+                )
+            )
+            .From(0)
+        );
+        if (!searchResponse.IsValid) throw new ElasticsearchClientException(searchResponse.DebugInformation);
+
+        var documents = searchResponse.Documents.ToList();
+        var instance = documents.FirstOrDefault() ?? Activator.CreateInstance<TDocument>();
         return instance;
     }
 

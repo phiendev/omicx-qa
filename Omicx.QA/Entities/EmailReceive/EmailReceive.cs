@@ -11,5 +11,5 @@ public class EmailReceive : FullAuditedAggregateRoot<Guid>
     public virtual string? RecordingUrl { get; set; }
     public virtual string? Content { get; set; }
     public virtual object? Links { get; set; }
-    public virtual List<EmailReceiveAttribute>? Attributes { get; set; }
+    public virtual List<EmailReceiveAttribute>? EmailReceiveAttributes { get; set; }
 }

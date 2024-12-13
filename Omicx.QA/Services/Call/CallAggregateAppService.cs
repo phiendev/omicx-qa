@@ -26,6 +26,7 @@ public class CallAggregateAppService : ApplicationService, ICallAggregateAppServ
     private readonly ILogger<CallAggregateAppService> _logger;
     private readonly IRepository<CallAggregate, Guid> _callAggregateRepository;
     private readonly IRepository<CallAggregateAttribute, Guid> _callAggregateAttributeRepository;
+    private readonly IRepository<DynamicEntitySchema, Guid> _dynamicEntitySchemaRepository;
     private readonly IDynamicEntityElasticService _dynamicEntityElasticService;
     private readonly IDynamicEntityAppService _dynamicEntityAppService;
     private readonly IElasticClient _elasticClient;
@@ -36,6 +37,7 @@ public class CallAggregateAppService : ApplicationService, ICallAggregateAppServ
         ILogger<CallAggregateAppService> logger,
         IRepository<CallAggregate, Guid> callAggregateRepository,
         IRepository<CallAggregateAttribute, Guid> callAggregateAttributeRepository,
+        IRepository<DynamicEntitySchema, Guid> dynamicEntitySchemaRepository,
         IDynamicEntityElasticService dynamicEntityElasticService,
         IDynamicEntityAppService dynamicEntityAppService,
         IElasticClient elasticClient
@@ -46,6 +48,7 @@ public class CallAggregateAppService : ApplicationService, ICallAggregateAppServ
         _logger = logger;
         _callAggregateRepository = callAggregateRepository;
         _callAggregateAttributeRepository = callAggregateAttributeRepository;
+        _dynamicEntitySchemaRepository = dynamicEntitySchemaRepository;
         _dynamicEntityElasticService = dynamicEntityElasticService;
         _dynamicEntityAppService = dynamicEntityAppService;
         _elasticClient = elasticClient;
@@ -94,8 +97,9 @@ public class CallAggregateAppService : ApplicationService, ICallAggregateAppServ
 
             var callAggregateDocuments = await _elasticClient.QueryAsync<CallAggregateDocument>(req);
 
-            var schema = await _elasticClient.GetByIdAsync<DynamicEntitySchemaDocument>("862838be-6586-c0f2-553e-3a16cdf702d9", customTenantId);
-
+            var dynamicEntitySchema = await _dynamicEntitySchemaRepository.FindAsync(x => x.EntityType == "call-aggregate");
+            var schema = dynamicEntitySchema is not null ? await _elasticClient.GetByIdAsync<DynamicEntitySchemaDocument>(dynamicEntitySchema.Id, customTenantId) : null;
+            
             return new DocumentResponse<IEnumerable<CallAggregateDocument>>(
                 Status: true,
                 Message: "Lấy dữ liệu thành công.",
@@ -106,6 +110,7 @@ public class CallAggregateAppService : ApplicationService, ICallAggregateAppServ
         }
         catch (Exception ex)
         {
+            
             _logger.LogError(ex, "Get call aggregate failed.");
             throw new Exception("Get call aggregate failed."); 
         }
@@ -186,6 +191,7 @@ public class CallAggregateAppService : ApplicationService, ICallAggregateAppServ
             
             callAggregate.LastModifierId = _currentUser.Id;
             callAggregate.LastModificationTime = DateTime.Now;
+            callAggregate.Links = _dynamicEntityAppService.GetDynamicLink("call-aggregate", update.CallId);
             
             var result = await _callAggregateRepository.UpdateAsync(callAggregate, autoSave: true);
             

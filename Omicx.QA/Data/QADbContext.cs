@@ -1,6 +1,7 @@
 ﻿using MongoDB.Driver;
 using Omicx.QA.EAV.DynamicEntity;
 using Omicx.QA.Entities.CallAggregate;
+using Omicx.QA.Entities.EmailReceive;
 using Omicx.QA.Entities.Todo;
 using Volo.Abp.Data;
 using Volo.Abp.MongoDB;
@@ -16,6 +17,8 @@ public class QADbContext : AbpMongoDbContext
     public IMongoCollection<TodoItem> TodoItems => Collection<TodoItem>();
     public IMongoCollection<CallAggregate> CallAggregates => Collection<CallAggregate>();
     public IMongoCollection<CallAggregateAttribute> CallAggregateAttributes => Collection<CallAggregateAttribute>();
+    public IMongoCollection<EmailReceive> EmailReceives => Collection<EmailReceive>();
+    public IMongoCollection<EmailReceiveAttribute> EmailReceiveAttributes => Collection<EmailReceiveAttribute>();
 
     #region Dynamic attribute
 
@@ -40,6 +43,14 @@ public class QADbContext : AbpMongoDbContext
         modelBuilder.Entity<CallAggregateAttribute>(b =>
         {
             b.CollectionName = "CallAggregateAttributes";
+        });
+        modelBuilder.Entity<EmailReceive>(b =>
+        {
+            b.CollectionName = "EmailReceives";
+        });
+        modelBuilder.Entity<EmailReceiveAttribute>(b =>
+        {
+            b.CollectionName = "EmailReceiveAttributes";
         });
         modelBuilder.Entity<DynamicEntitySchema>(b =>
         {

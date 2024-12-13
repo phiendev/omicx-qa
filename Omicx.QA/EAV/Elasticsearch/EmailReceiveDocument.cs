@@ -1,7 +1,6 @@
 using Nest;
 using Omicx.QA.Elasticsearch.Documents;
 using Omicx.QA.Entities;
-using Omicx.QA.Entities.CallAggregate;
 
 namespace Omicx.QA.EAV.Elasticsearch;
 
@@ -15,5 +14,5 @@ public class EmailReceiveDocument : ElasticNestedEntity
     public Assignee? Assignee { get; set; }
     public string? RecordingUrl { get; set; }
     public string? Content { get; set; }
-    public object? Links { get; set; }
+    public Dictionary<string, string>? Links { get; set; }
 }
