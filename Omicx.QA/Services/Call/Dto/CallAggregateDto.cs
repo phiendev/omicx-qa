@@ -1,5 +1,7 @@
 using Omicx.QA.Entities;
 using Omicx.QA.Entities.CallAggregate;
+using Omicx.QA.JsonRequests;
+using Omicx.QA.JsonRequests.Call;
 
 namespace Omicx.QA.Services.Call.Dto;
 

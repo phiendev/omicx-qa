@@ -1,5 +1,7 @@
 ﻿using Omicx.QA.EAV.DynamicEntity;
 using Omicx.QA.Entities;
+using Omicx.QA.JsonRequests;
+using Omicx.QA.JsonRequests.Call;
 
 namespace Omicx.QA.Services.Email.Request;
 

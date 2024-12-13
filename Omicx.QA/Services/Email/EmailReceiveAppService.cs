@@ -7,6 +7,7 @@ using Omicx.QA.Elasticsearch.Extensions;
 using Omicx.QA.Elasticsearch.Factories;
 using Omicx.QA.Elasticsearch.Requests;
 using Omicx.QA.Entities.EmailReceive;
+using Omicx.QA.JsonRequests.Email;
 using Omicx.QA.MultiTenancy.Customs;
 using Omicx.QA.Services.DynamicEntity;
 using Omicx.QA.Services.Elastic;
@@ -19,7 +20,7 @@ using Volo.Abp.Users;
 namespace Omicx.QA.Services.Email;
 
 [Route("api/app/email-receive")]
-public class EmailReceiveAppService : ApplicationService, IEmailReceive
+public class EmailReceiveAppService : ApplicationService, IEmailReceiveAppService
 {
     private readonly ICurrentCustomTenant _currentCustomTenant;
     private readonly ICurrentUser _currentUser;
@@ -114,6 +115,21 @@ public class EmailReceiveAppService : ApplicationService, IEmailReceive
             _logger.LogError(ex, "Get email receive failed.");
             throw new Exception("Get email receive failed."); 
         }
+    }
+    
+    [HttpPost("insert-jon-sync-call-aggregate")]
+    public async Task InsertJobSyncEmailReceive(EmailEventRequest request)
+    {
+        if(request.EmailId is null) return;
+        
+        var callEventRequest = new EmailReceiveRequest
+        {
+            EmailId = request.EmailId,
+            RecordingUrl = request.RecordingUrl,
+            Content = request.Content,
+            Assignee = request.Assignee,
+        };
+        await CreateEmailReceive(callEventRequest);
     }
 
     [HttpPost("create-email-receive")]

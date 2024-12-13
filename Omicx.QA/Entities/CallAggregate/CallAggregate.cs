@@ -1,4 +1,6 @@
 ﻿using MongoDB.Bson.Serialization.Attributes;
+using Omicx.QA.JsonRequests;
+using Omicx.QA.JsonRequests.Call;
 using Volo.Abp.Domain.Entities.Auditing;
 
 namespace Omicx.QA.Entities.CallAggregate;

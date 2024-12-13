@@ -1,6 +1,8 @@
 using Nest;
 using Omicx.QA.Elasticsearch.Documents;
 using Omicx.QA.Entities;
+using Omicx.QA.JsonRequests;
+using Omicx.QA.JsonRequests.Call;
 
 namespace Omicx.QA.EAV.Elasticsearch;
 

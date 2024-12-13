@@ -7,6 +7,7 @@ using Omicx.QA.Elasticsearch.Extensions;
 using Omicx.QA.Elasticsearch.Factories;
 using Omicx.QA.Elasticsearch.Requests;
 using Omicx.QA.Entities.CallAggregate;
+using Omicx.QA.JsonRequests.Call;
 using Omicx.QA.MultiTenancy.Customs;
 using Omicx.QA.Services.Call.Dto;
 using Omicx.QA.Services.Call.Request;
@@ -116,6 +117,20 @@ public class CallAggregateAppService : ApplicationService, ICallAggregateAppServ
         }
     }
 
+    [HttpPost("insert-jon-sync-call-aggregate")]
+    public async Task InsertJobSyncCallAggregate(CallEventRequest request)
+    {
+        if(request.CallId is null) return;
+        
+        var callEventRequest = new CallAggregateRequest
+        {
+            CallId = request.CallId,
+            RecordingUrl = request.RecordingUrl,
+            Content = request.Content,
+            Assignee = request.Assignee,
+        };
+        await CreateCallAggregate(callEventRequest);
+    }
     
     [HttpPost("create-call-aggregate")]
     public async Task<CallAggregateDto> CreateCallAggregate(CallAggregateRequest item)
