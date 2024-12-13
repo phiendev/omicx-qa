@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Nest;
 using Omicx.QA.EAV.Elasticsearch;
 using Omicx.QA.Elasticsearch.Extensions;
@@ -14,6 +15,7 @@ using Volo.Abp.Domain.Repositories;
 
 namespace Omicx.QA.Services.Todo;
 
+[Authorize]
 [Route("api/app/todo")]
 public class TodoAppService : ApplicationService, ITodoAppService
 {

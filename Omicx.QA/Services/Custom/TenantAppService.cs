@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Data;
@@ -5,6 +6,7 @@ using Volo.Abp.TenantManagement;
 
 namespace Omicx.QA.Services.Custom;
 
+[Authorize]
 [Route("api/app/tenant")]
 public class TenantAppService : ApplicationService, ITenantAppService
 {

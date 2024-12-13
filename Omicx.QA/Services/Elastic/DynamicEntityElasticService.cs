@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Nest;
 using Omicx.QA.EAV.DynamicEntity;
 using Omicx.QA.EAV.Elasticsearch;
@@ -11,6 +12,7 @@ using Volo.Abp.Domain.Repositories;
 
 namespace Omicx.QA.Services.Elastic;
 
+[Authorize]
 public class DynamicEntityElasticService : IDynamicEntityElasticService, ITransientDependency
 {
     private readonly ICurrentCustomTenant _currentCustomTenant;

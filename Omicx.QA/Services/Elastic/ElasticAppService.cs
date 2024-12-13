@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nest;
 using Omicx.QA.EAV.Elasticsearch;
@@ -7,6 +8,7 @@ using Volo.Abp.Application.Services;
 
 namespace Omicx.QA.Services.Elastic;
 
+[Authorize]
 [Route("api/app/elastic")]
 public class ElasticAppService : ApplicationService, IElasticAppService
 {
