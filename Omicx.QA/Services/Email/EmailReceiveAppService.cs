@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nest;
 using Omicx.QA.Common.Responses;
@@ -19,6 +20,7 @@ using Volo.Abp.Users;
 
 namespace Omicx.QA.Services.Email;
 
+[Authorize]
 [Route("api/app/email-receive")]
 public class EmailReceiveAppService : ApplicationService, IEmailReceiveAppService
 {

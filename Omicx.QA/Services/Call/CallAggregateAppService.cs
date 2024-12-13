@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Nest;
 using Omicx.QA.Common.Responses;
 using Omicx.QA.EAV.DynamicEntity;
@@ -19,6 +20,7 @@ using Volo.Abp.Users;
 
 namespace Omicx.QA.Services.Call;
 
+[Authorize]
 [Route("api/app/call-aggregate")]
 public class CallAggregateAppService : ApplicationService, ICallAggregateAppService
 {
