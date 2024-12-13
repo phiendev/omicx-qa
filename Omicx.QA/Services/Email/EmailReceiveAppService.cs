@@ -252,7 +252,12 @@ public class EmailReceiveAppService : ApplicationService, IEmailReceiveAppServic
                     foreach (var emailReceiveAttribute in emailReceiveAttributesToUpdate)
                     {
                         var newEmailReceiveAttribute = update.EmailReceiveAttributes.FirstOrDefault(b => b.DynamicAttributeId == emailReceiveAttribute.DynamicAttributeId);
-                        if (newEmailReceiveAttribute is not null) emailReceiveAttribute.Value = newEmailReceiveAttribute.Value;
+                        if (newEmailReceiveAttribute is not null)
+                        {
+                            emailReceiveAttribute.Value = newEmailReceiveAttribute.Value;
+                            emailReceiveAttribute.SystemName = newEmailReceiveAttribute.SystemName;
+                            emailReceiveAttribute.DisplayName = newEmailReceiveAttribute.DisplayName;
+                        }
                         emailReceiveAttribute.LastModifierId = _currentUser.Id;
                         emailReceiveAttribute.LastModificationTime = DateTime.Now;
                     }

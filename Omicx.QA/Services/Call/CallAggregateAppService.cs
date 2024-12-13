@@ -252,7 +252,12 @@ public class CallAggregateAppService : ApplicationService, ICallAggregateAppServ
                     foreach (var callAggregateAttribute in callAggregateAttributesToUpdate)
                     {
                         var newCallAggregateAttribute = update.CallAggregateAttributes.FirstOrDefault(b => b.DynamicAttributeId == callAggregateAttribute.DynamicAttributeId);
-                        if (newCallAggregateAttribute is not null) callAggregateAttribute.Value = newCallAggregateAttribute.Value;
+                        if (newCallAggregateAttribute is not null)
+                        {
+                            callAggregateAttribute.Value = newCallAggregateAttribute.Value;
+                            callAggregateAttribute.SystemName = newCallAggregateAttribute.SystemName;
+                            callAggregateAttribute.DisplayName = newCallAggregateAttribute.DisplayName;
+                        }
                         callAggregateAttribute.LastModifierId = _currentUser.Id;
                         callAggregateAttribute.LastModificationTime = DateTime.Now;
                     }
